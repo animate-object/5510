@@ -3,6 +3,7 @@ import * as Result from './result'
 import * as Arrays from './arrays'
 import * as Geom from './geom'
 import { type Point, type Angle } from './geom'
+import * as Storage from './localStorage'
 
 export {
     Geom,
@@ -14,4 +15,5 @@ export {
     Maybe,
     Result,
     Arrays,
+    Storage,
 }

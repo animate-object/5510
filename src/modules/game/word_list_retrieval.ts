@@ -6,19 +6,22 @@ function wordlistCacheKey(listName: string): string {
   return `${WORD_LIST_CACHE_KEY_PREFIX}.${listName}`;
 }
 
-async function fetchWordListFromServer(): Promise<
-  Result.Result<string>
-> {
-  let response: Response;
+const DEFAULT_WORD_LIST_URL =
+  "https://raw.githubusercontent.com/animate-object/5510/main/public/wordlist.txt";
+
+async function fetchWordListFromServer(
+  url: string = DEFAULT_WORD_LIST_URL
+): Promise<Result.Result<string>> {
   try {
-    response = await fetch("/compressed-word-data.txt.gz");
-  } catch (error: any) {
-    return Result.failure(`Failed to fetch word list: ${error.message}`);
+    const response = await fetch(url);
+    if (!response.ok) {
+      return Result.failure("Failed to fetch word list.");
+    }
+    return Result.success(await response.text());
+  } catch (error) {
+    return Result.failure("Failed to fetch word list.");
   }
-
-  return Result.success(await response.text());
 }
-
 
 async function loadWordList(
   listName: string = "default"
@@ -27,17 +30,22 @@ async function loadWordList(
     wordlistCacheKey(listName)
   );
   if (cachedList) {
-    console.info("Loaded word list from cache")
+    console.info("Loaded word list from cache");
     return Result.success(JSON.parse(cachedList));
   }
-  console.info("Fetching word list from server")
+  console.info("Fetching word list from server");
   const result = await fetchWordListFromServer();
-  const words = Result.map(result, (text) => text.split(","));
-  Result.map(words, (words) => {
-    console.info("Caching word list")
-    localStorage.setItem(wordlistCacheKey(listName), JSON.stringify(words));
-  });
-  return words;
+  const wordsResult = Result.map(result, (text) => text.split(","));
+  if (Result.isFailure(wordsResult)) {
+    return wordsResult;
+  }
+  const words = wordsResult.value;
+  if (words.length < 1000) {
+    return Result.failure("Probable failure to fetch word list.");
+  }
+  console.info("Caching word list");
+  localStorage.setItem(wordlistCacheKey(listName), JSON.stringify(words));
+  return Result.success(words);
 }
 
 export async function fetchWordSet(): Promise<Result.Result<Set<string>>> {

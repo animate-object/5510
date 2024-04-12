@@ -2,6 +2,7 @@
 // Some tiles have bonuses
 
 import { Arrays } from "../common";
+import { Letter } from './letter'
 
 enum Bonus {
     DoubleLetter = "DoubleLetter",
@@ -19,34 +20,6 @@ const BONUS_ABBREVIATIONS: Record<Bonus, string> = {
 
 export const bonusAbbreviation = (bonus: Bonus): string => BONUS_ABBREVIATIONS[bonus]
 
-enum Letter {
-    A = "A",
-    B = "B",
-    C = "C",
-    D = "D",
-    E = "E",
-    F = "F",
-    G = "G",
-    H = "H",
-    I = "I",
-    J = "J",
-    K = "K",
-    L = "L",
-    M = "M",
-    N = "N",
-    O = "O",
-    P = "P",
-    Q = "Q",
-    R = "R",
-    S = "S",
-    T = "T",
-    U = "U",
-    V = "V",
-    W = "W",
-    X = "X",
-    Y = "Y",
-    Z = "Z"
-}
 
 interface TileData {
     letter?: Letter;
@@ -80,7 +53,6 @@ export type {
 }
 
 export {
-    Letter,
     Bonus,
     randomBonusTile,
     letterTile,

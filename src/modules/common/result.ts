@@ -30,7 +30,7 @@ export function isFailure<T>(result: Result<T>): result is Failure {
 
 export function map<T, U>(result: Result<T>, fn: (value: T) => U): Result<U> {
     if (isFailure(result)) {
-        console.log("map failure", result.message);
+        console.warn("Failed result:", result.message);
     }
     return isSuccess(result) ? success(fn(result.value)) : result;
 }

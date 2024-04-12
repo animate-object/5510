@@ -5,3 +5,5 @@ export { fetchWordSet };
 export * from './init'
 export * from './game'
 export * from './turn_processing'
+export * from './game_script'
+export * from './letter'

@@ -23,6 +23,7 @@
   --gold-2: #ffbb00;
   --dgreen-1: #46a646;
   --dgreen-2: #228b22;
+  --dirty-white: #f8f8ff;
   --ivory: #fffff0;
   --ivory-2: #fffff9;
   --rainy-day: #a0a0a0;
@@ -32,6 +33,6 @@
 body {
   margin: 0;
   padding: 0;
-
+  overflow: hidden;
   background: linear-gradient(135deg, var(--rainy-day), 20%, var(--dblue-2));
 }

@@ -1,21 +1,73 @@
-import { useEffect, useState } from "react";
+import "./modules/common/rng.ts";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
-import { type Grid, GridView, setTilesInGrid, setTile } from "./modules/grid";
+import { type Grid, GridView } from "./modules/grid";
 import {
+  DEFAULT_GRID_SIZE,
   TileData,
-  TurnRule,
+  attemptTurn,
   fetchWordSet,
   initialGrid,
-  letterTileFromChar,
-  validateTurn,
 } from "./modules/game";
-import { Tile } from "./modules/display";
+import { GridTile, HandTile } from "./modules/display";
 import { Result } from "./modules/common";
 import { DirectionArrow } from "./modules/display/DirectionArrow";
+import { Bag, Hand, drawHand, newBag } from "./modules/game/bag.ts";
+import { getSeedForDisplay } from "./modules/common/rng.ts";
+import { QuickStatsPanel } from "./modules/display/QuickStatsPanel.tsx";
+import classNames from "classnames";
+
+const TOTAL_TURNS = 5;
+
+interface LayoutDetails {
+  cellSize: number;
+  screenWidth: number;
+  screenHeight: number;
+  aspectRatio: number;
+  isPortrait: boolean;
+}
+
+const computeLayoutDetails = (gridSize: number): LayoutDetails => {
+  const gridSizeAccountingForHand = gridSize + 1.25;
+  const height = window.innerHeight;
+  const width = window.innerWidth;
+
+  const isPortrait = height > width;
+
+  const cellSize = isPortrait
+    ? (width * 0.98) / gridSize
+    : (height * 0.8) / gridSizeAccountingForHand;
+
+  return {
+    cellSize: cellSize,
+    screenWidth: width,
+    screenHeight: height,
+    aspectRatio: width / height,
+    isPortrait,
+  };
+};
 
 export function App() {
-  const [grid, setGrid] = useState<Grid<TileData>>(() => initialGrid());
+  const gridSize = DEFAULT_GRID_SIZE;
+  const [grid, setGrid] = useState<Grid<TileData>>(() =>
+    initialGrid(gridSize, gridSize)
+  );
   const [wordSet, setWordSet] = useState<Set<string>>(new Set());
+  const [bag, setBag] = useState<Bag>(() => newBag());
+  const [hand, setHand] = useState<Hand>(null as any as Hand);
+  const [handsLeft, setHandsLeft] = useState<number>(TOTAL_TURNS);
+  const [turnsTaken, setTurnsTaken] = useState<number>(0);
+  const [points, setPoints] = useState<number>(0);
+  const seedRef = useRef<string>(getSeedForDisplay());
+  const layout = useRef<LayoutDetails>(computeLayoutDetails(gridSize));
+  const { cellSize, isPortrait } = layout.current;
+
+  useEffect(() => {
+    const [hand, updatedBag] = drawHand(5, bag);
+    setHand(hand);
+    setBag(updatedBag);
+    setHandsLeft(handsLeft - 1);
+  }, []);
 
   useEffect(() => {
     fetchWordSet().then((result) => {
@@ -26,74 +78,73 @@ export function App() {
     });
   }, []);
 
-  const allWordsAreValidRule: TurnRule = (summary, gameState) => {
-    const { wordsPlayed, lettersPlayed } = summary;
-    console.log("Played words", wordsPlayed);
-
-    const firstInvalidWord = wordsPlayed.find(
-      (word) => !wordSet.has(word.raw.toLowerCase())
-    );
-
-    if (firstInvalidWord != null) {
-      return Result.failure(`Invalid word: "${firstInvalidWord.raw}"`);
-    } else {
-      return Result.success(undefined);
+  useEffect(() => {
+    if (turnsTaken >= TOTAL_TURNS && handsLeft < 1) {
+      const message = "Game Complete" + `Points: ${points}`;
+      alert(message);
     }
-  }
+  }, [turnsTaken, handsLeft, points]);
+
+  const drawNextHand = () => {
+    const [hand, updatedBag] = drawHand(5, bag);
+    setHand(hand);
+    setBag(updatedBag);
+    setHandsLeft(handsLeft - 1);
+  };
 
   return (
-    <div className="app">
+    <div
+      className={classNames("app", {
+        "likely-mobile": isPortrait,
+      })}
+    >
+      <QuickStatsPanel
+        mode={isPortrait ? "portrait" : "landscape"}
+        handsLeft={handsLeft}
+        currentTurn={turnsTaken}
+        totalTurns={TOTAL_TURNS}
+        points={points}
+        gameSeed={seedRef.current}
+      />
       <GridView
         grid={grid}
-        cellSizePx={80}
+        cellSizePx={cellSize}
         renderCell={(cell, coords, cellSizePx) => (
-          <Tile
+          <GridTile
             cell={cell}
-            size={cellSizePx}
-            onClick={(cell, direction) => {
-              console.log("Clicked", cell);
-              const word = prompt("Enter a word")?.toUpperCase();
-              if (word == null || word === "") {
-                return;
-              }
-              // if (!wordSet.has(word.toLowerCase())) {
-              //   alert(`"${word}" is not a valid word`);
-              //   return;
-              // }
-              const wordLength = word.length;
-              const availableTiles = grid.walk(coords, direction);
-              if (availableTiles.length < wordLength) {
-                alert(`Not enough tiles to spell "${word}"`);
+            cellSize={cellSizePx}
+            onClick={(_cell, direction) => {
+              const word = prompt("Enter a word")?.toUpperCase() || "";
+
+              const result = attemptTurn(
+                { grid, wordSet, hand },
+                { word, start: coords, direction }
+              );
+
+              if (Result.isFailure(result)) {
+                alert(result.message);
                 return;
               }
 
-              const tileSetters = word.split("").map((letter, i) => {
-                const { coords } = availableTiles[i];
-                return setTile(coords.x, coords.y, letterTileFromChar(letter));
-              });
+              const { pointsScored, gameGrid } = result.value;
+              setGrid(gameGrid);
+              setPoints(points + pointsScored);
 
-              // Result.map(setTilesInGrid(grid, tileSetters), setGrid);
-              const newGridResult = setTilesInGrid(grid, tileSetters);
-              if (Result.isFailure(newGridResult)) {
-                alert(newGridResult.message);
-                return;
+              if (handsLeft > 0) {
+                drawNextHand();
               }
-              const newGrid = newGridResult.value;
-
-              const turnResult = validateTurn(grid, newGrid, {hand: []}, [
-                allWordsAreValidRule
-              ]);
-
-              if (turnResult.kind === "invalid") {
-                alert(turnResult.message);
-                return;
-              } else {
-                setGrid(newGrid);
-              }
+              setTurnsTaken(turnsTaken + 1);
             }}
           />
         )}
       />
+      <div className="hug-bottom">
+        <div className="hand">
+          {hand?.letters?.map((letter, i) => (
+            <HandTile key={i} letter={letter} cellSize={cellSize} />
+          ))}
+        </div>
+      </div>
       <DirectionArrow />
     </div>
   );
