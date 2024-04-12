@@ -37,6 +37,7 @@ interface QuickStatsProps {
   totalTurns: number;
   points: number;
   gameSeed: string;
+  version: string;
 }
 
 export function QuickStatsPanel({
@@ -46,6 +47,7 @@ export function QuickStatsPanel({
   totalTurns,
   points,
   gameSeed,
+  version,
 }: QuickStatsProps) {
   const copyGameSeedUrl = () => {
     const url = new URL(window.location.href);
@@ -54,12 +56,12 @@ export function QuickStatsPanel({
   };
 
   return (
-    <div className={
-      classNames("quick-stats-panel", {
+    <div
+      className={classNames("quick-stats-panel", {
         portrait: mode === "portrait",
         landscape: mode === "landscape",
-      })
-    }>
+      })}
+    >
       <div className="quick-stats-panel-section">
         <PanelItem>Score: {points}</PanelItem>
         <PanelItem>
@@ -68,6 +70,13 @@ export function QuickStatsPanel({
         <PanelItem>Hands Left: {handsLeft}</PanelItem>
       </div>
       <div className="quick-stats-panel-section">
+        <PanelItem
+          style={{
+            color: "var(--rainy-day)",
+          }}
+        >
+          V{version}
+        </PanelItem>
         <PanelItem onClick={() => copyGameSeedUrl()}>Copy Game Link</PanelItem>
         <PanelItem onClick={() => clearSeedAndReload()}>New Game</PanelItem>
       </div>

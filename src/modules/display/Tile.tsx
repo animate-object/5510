@@ -1,16 +1,7 @@
 import classNames from "classnames";
-import { Bonus, GameCellAndCoords, Letter, TileData, baseScore } from "../game";
-import { Cell as CellT } from "../grid";
+import { Bonus, GameCellAndCoords, Letter, baseScore } from "../game";
 import "./Tile.css";
-import {
-  HTMLAttributes,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
-import { DirectionArrowContext } from "./DirectionArrowProvider";
-import { Geom } from "../common";
+import { HTMLAttributes, useCallback, useState } from "react";
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   content?: string;

@@ -4,7 +4,6 @@ import "./App.css";
 import { type Grid, GridView } from "./modules/grid";
 import {
   DEFAULT_GRID_SIZE,
-  GameCell,
   GameCellAndCoords,
   TileData,
   attemptTurn,
@@ -100,7 +99,7 @@ export function App() {
   }, [bag, handsLeft, hand.handId]);
 
   const handleClickTile = (cell: GameCellAndCoords, direction: "s" | "e") => {
-    if (handsLeft < 1) {
+    if (turnsTaken >= TOTAL_TURNS) {
       alert("Game over, start a new game to continue playing.");
       return;
     }
@@ -149,6 +148,7 @@ export function App() {
         totalTurns={TOTAL_TURNS}
         points={points}
         gameSeed={seedRef.current}
+        version="0.0.3"
       />
       <GridView
         grid={grid}

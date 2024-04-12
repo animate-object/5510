@@ -6,18 +6,6 @@ import { Bonus, letterTileFromChar } from "./tile_data";
 import { validateTurn } from "./turn_processing";
 import { baseScore } from "./letter";
 
-interface TurnAttemptArgs {
-  word: string;
-  start: Coords;
-  direction: "e" | "s";
-}
-
-interface GameState {
-  grid: GameGrid;
-  wordSet: Set<string>;
-  hand: Hand;
-}
-
 const onlyValidWordsRuleFactory = (wordSet: Set<string>): TurnRule => {
   return (summary) => {
     const { wordsPlayed } = summary;
