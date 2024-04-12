@@ -1,9 +1,11 @@
 import "./modules/common/rng.ts";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import "./App.css";
 import { type Grid, GridView } from "./modules/grid";
 import {
   DEFAULT_GRID_SIZE,
+  GameCell,
+  GameCellAndCoords,
   TileData,
   attemptTurn,
   fetchWordSet,
@@ -52,9 +54,9 @@ export function App() {
   const [grid, setGrid] = useState<Grid<TileData>>(() =>
     initialGrid(gridSize, gridSize)
   );
-  const [wordSet, setWordSet] = useState<Set<string>>(new Set());
-  const [bag, setBag] = useState<Bag>(() => newBag());
-  const [hand, setHand] = useState<Hand>(null as any as Hand);
+  const wordSet = useRef<Set<string>>(new Set());
+  const [bag, setBag] = useState<Bag>(newBag());
+  const [hand, setHand] = useState<Hand>({ handId: "-" } as any as Hand);
   const [handsLeft, setHandsLeft] = useState<number>(TOTAL_TURNS);
   const [turnsTaken, setTurnsTaken] = useState<number>(0);
   const [points, setPoints] = useState<number>(0);
@@ -63,16 +65,16 @@ export function App() {
   const { cellSize, isPortrait } = layout.current;
 
   useEffect(() => {
-    const [hand, updatedBag] = drawHand(5, bag);
-    setHand(hand);
-    setBag(updatedBag);
+    const [firstHand, initialBag] = drawHand(5, bag);
+    setHand(firstHand);
+    setBag(initialBag);
     setHandsLeft(handsLeft - 1);
   }, []);
 
   useEffect(() => {
     fetchWordSet().then((result) => {
       Result.map(result, (words) => {
-        setWordSet(new Set(words));
+        wordSet.current = new Set(words);
         (window as any).wordSet = words;
       });
     });
@@ -85,11 +87,53 @@ export function App() {
     }
   }, [turnsTaken, handsLeft, points]);
 
-  const drawNextHand = () => {
+  useEffect(() => {
+    console.log({ hand });
+  }, [hand.handId]);
+
+  const drawNextHand = useCallback(() => {
     const [hand, updatedBag] = drawHand(5, bag);
+    console.log("drawing next hand", hand, updatedBag);
     setHand(hand);
     setBag(updatedBag);
     setHandsLeft(handsLeft - 1);
+  }, [bag, handsLeft, hand.handId]);
+
+  const handleClickTile = (cell: GameCellAndCoords, direction: "s" | "e") => {
+    if (handsLeft < 1) {
+      alert("Game over, start a new game to continue playing.");
+      return;
+    }
+
+    const displayDirection = direction === "s" ? "down" : "across";
+    const word =
+      prompt(`Enter a word to place ${displayDirection}`)?.toUpperCase() || "";
+    const result = attemptTurn(
+      hand,
+      grid,
+      wordSet.current,
+      word,
+      cell.coords,
+      direction
+    );
+
+    if (word.length === 0) {
+      return;
+    }
+
+    if (Result.isFailure(result)) {
+      alert(result.message);
+      return;
+    }
+
+    const { pointsScored, gameGrid } = result.value;
+    setGrid(gameGrid);
+    setPoints(points + pointsScored);
+
+    if (handsLeft > 0) {
+      drawNextHand();
+    }
+    setTurnsTaken(turnsTaken + 1);
   };
 
   return (
@@ -111,30 +155,9 @@ export function App() {
         cellSizePx={cellSize}
         renderCell={(cell, coords, cellSizePx) => (
           <GridTile
-            cell={cell}
+            cell={{ cell, coords }}
             cellSize={cellSizePx}
-            onClick={(_cell, direction) => {
-              const word = prompt("Enter a word")?.toUpperCase() || "";
-
-              const result = attemptTurn(
-                { grid, wordSet, hand },
-                { word, start: coords, direction }
-              );
-
-              if (Result.isFailure(result)) {
-                alert(result.message);
-                return;
-              }
-
-              const { pointsScored, gameGrid } = result.value;
-              setGrid(gameGrid);
-              setPoints(points + pointsScored);
-
-              if (handsLeft > 0) {
-                drawNextHand();
-              }
-              setTurnsTaken(turnsTaken + 1);
-            }}
+            onClick={handleClickTile}
           />
         )}
       />

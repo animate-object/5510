@@ -2,7 +2,6 @@ import { Maybe, Result } from "../common";
 import {
   GameCellAndCoords,
   GameGrid,
-  GameState,
   PlacementSummary,
   PlayedWord,
   TurnRule,
@@ -168,7 +167,6 @@ function scoreValidPlacement(placementSummary: PlacementSummary): TurnSummary {
 export function validateTurn(
   grid: GameGrid,
   nextGrid: GameGrid,
-  gameState: GameState,
   rules: TurnRule[]
 ): TurnResult {
   const placementResult = summarizePlacement(grid, nextGrid);
@@ -183,7 +181,7 @@ export function validateTurn(
   const placementSummary = placementResult.value;
 
   for (const rule of rules) {
-    const result = rule(placementSummary, gameState);
+    const result = rule(placementSummary);
     if (Result.isFailure(result)) {
       return { kind: "invalid", message: result.message || "Invalid turn" };
     }

@@ -1,8 +1,14 @@
 import classNames from "classnames";
-import { Bonus, Letter, TileData, baseScore } from "../game";
+import { Bonus, GameCellAndCoords, Letter, TileData, baseScore } from "../game";
 import { Cell as CellT } from "../grid";
 import "./Tile.css";
-import { HTMLAttributes, useContext } from "react";
+import {
+  HTMLAttributes,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { DirectionArrowContext } from "./DirectionArrowProvider";
 import { Geom } from "../common";
 
@@ -54,73 +60,61 @@ export const BaseTile = ({
 };
 
 interface ClickableTileProps extends Omit<Props, "onClick"> {
-  cell: CellT<TileData>;
-  onClick?: (cell: CellT<TileData>, direction: "s" | "e") => void;
+  cell: GameCellAndCoords;
+  onClick?: (cell: GameCellAndCoords, direction: "s" | "e") => void;
+  interactionTimeout?: number;
 }
 
 export const ClickableTile = ({
   className,
   onClick,
   cell,
+  interactionTimeout = 300,
   ...rest
 }: ClickableTileProps) => {
-  const directionArrowContext = useContext(DirectionArrowContext);
+  const [lastInteractionTime, setLastInteractionTime] = useState(0);
+  const [interactionTimer, setInteractionTimer] = useState<number | null>(null);
 
-  const handleMouseMove = (e: MouseEvent | TouchEvent) => {
-    if (e instanceof TouchEvent) {
-      e.preventDefault();
-      const touch = e.touches[0];
-      directionArrowContext.setEnd([touch.clientX, touch.clientY]);
+  const handleClick = useCallback(
+    (direction: "s" | "e") => {
+      if (onClick) {
+        onClick(cell, direction);
+      }
+    },
+    [onClick, cell]
+  );
+
+  const handleInteraction = () => {
+    const currentTime = Date.now();
+    const elapsedTime = currentTime - lastInteractionTime;
+    console.log({
+      currentTime,
+      lastInteractionTime,
+      elapsedTime,
+    });
+
+    // Clear previous timer if it exists
+    if (interactionTimer) {
+      clearTimeout(interactionTimer);
+    }
+
+    if (elapsedTime < interactionTimeout) {
+      // If the interactions are within the timeout, consider it a double interaction
+      handleClick("e");
+      setLastInteractionTime(0); // Reset
     } else {
-      directionArrowContext.setEnd([e.clientX, e.clientY]);
+      // Otherwise, start a timer for a potential single interaction
+      const timer = setTimeout(() => {
+        handleClick("s");
+      }, interactionTimeout);
+      console.log("Setting timer");
+      setInteractionTimer(timer);
+      setLastInteractionTime(currentTime);
     }
-  };
-
-  const handleMouseDown = (e: React.DragEvent<HTMLDivElement>) => {
-    directionArrowContext.setStart([e.clientX, e.clientY]);
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-  };
-
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    const touch = e.touches[0];
-    directionArrowContext.setStart([touch.clientX, touch.clientY]);
-    window.addEventListener("touchmove", handleMouseMove);
-    window.addEventListener("touchend", handleMouseUp);
-  };
-
-  const handleMouseUp = (_e: any) => {
-    window.removeEventListener("mousemove", handleMouseMove);
-    window.removeEventListener("mouseup", handleMouseUp);
-
-    const angle = directionArrowContext.getAngle();
-    if (onClick && angle != null) {
-      const angleD = Geom.toDegrees(angle);
-
-      const labeled = Geom.labelAngle<"e" | "s">(
-        angleD,
-        {
-          e: [
-            [0, 45],
-            [215, 360],
-          ],
-          s: [[45, 215]],
-        },
-        "s"
-      );
-      onClick(cell, labeled);
-    }
-    directionArrowContext.setStart(null);
-    directionArrowContext.setEnd(null);
   };
 
   return (
-    <BaseTile
-      className={className}
-      onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStart}
-      {...rest}
-    />
+    <BaseTile className={className} onClick={handleInteraction} {...rest} />
   );
 };
 
@@ -140,13 +134,14 @@ export const HandTile = ({ letter, cellSize }: HandTileProps) => {
 };
 
 interface LetterTileProps extends ClickableTileProps {
-  letter: TileData["letter"];
+  letter: Letter;
+  bonus?: Bonus;
 }
 
-export const LetterTile = ({ letter, ...rest }: LetterTileProps) => {
+export const LetterTile = ({ letter, bonus, ...rest }: LetterTileProps) => {
   const classes = ["letter-tile"];
-  if (rest.cell.data.bonus) {
-    const bonusClass = getBonusTileProps(rest.cell.data.bonus).className;
+  if (bonus) {
+    const bonusClass = getBonusTileProps(bonus).className;
     classes.push(bonusClass);
   }
   return (
@@ -178,11 +173,15 @@ export const BonusTile = ({ bonus, ...rest }: BonusTileProps) => {
 };
 
 export const GridTile = (props: ClickableTileProps) => {
-  const { letter, bonus } = props.cell.data;
+  const {
+    cell: { data },
+  } = props.cell;
+  const { letter, bonus } = data;
   if (letter) {
     return (
       <LetterTile
         letter={letter}
+        bonus={bonus}
         topRightContent={baseScore(letter).toString()}
         {...props}
       />

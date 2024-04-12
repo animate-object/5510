@@ -18,16 +18,11 @@ export interface PlayedWord {
   raw: string;
 }
 
-export interface GameState {
-  hand: Letter[];
-}
-
 export interface PlacementSummary {
   wordsPlayed: PlayedWord[];
   lettersPlayed: Letter[];
 }
 
 export type TurnRule = (
-  placementSummary: PlacementSummary,
-  gameState: GameState
+  placementSummary: PlacementSummary
 ) => Result.Result<void>;

@@ -16,6 +16,7 @@ export interface Bag {
 export interface Hand {
   size: number;
   letters: Letter[];
+  handId: string;
 }
 
 function draw(
@@ -109,6 +110,7 @@ export function drawHand(
   const hand = {
     size: total,
     letters: [...drawnLetters],
+    handId: `hand-${drawnLetters.join("")}`,
   };
   return [hand, newBag];
 }
