@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sanchez&display=swap');
+
+:root {
+  font-size: 16px;
+  font-family: 'Sanchez', monospace;
+
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 1rem;
+  --spacing-4: 1.5rem;
+  --spacing-5: 2rem;
+
+  --lblue-1: #e1f8ff;
+  --lblue-2: #53d7ff;
+  --dblue-1: #030335;
+  --dblue-2: #131327;
+  --pink-1: #ffa4d1;
+  --pink-2: #ff69b4;
+  --burg-1: #b00808;
+  --burg-2: #800020;
+  --gold-1: #f9c417;
+  --gold-2: #ffbb00;
+  --dgreen-1: #46a646;
+  --dgreen-2: #228b22;
+  --ivory: #fffff0;
+  --ivory-2: #fffff9;
+  --rainy-day: #a0a0a0;
+  --charcoal: #444444;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+
+  background: linear-gradient(135deg, var(--rainy-day), 20%, var(--dblue-2));
+}

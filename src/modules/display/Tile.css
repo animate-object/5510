@@ -1,0 +1,47 @@
+.space {
+    text-align: center;
+    vertical-align: middle;
+    border-radius: var(--spacing-2);
+    cursor: pointer;
+    background-color: var(--ivory);
+    user-select: none;
+    transition: border-color 0.25s, opacity 0.25s;
+    border-color: transparent;
+    border-style: solid;
+    opacity: .9;
+}
+
+.space:hover {
+    border-color: var(--lblue-1);
+    opacity: 1;
+}
+
+.space:active {
+    border-color: var(--lblue-2);
+}
+
+.letter-tile {
+    color: var(--charcoal);
+    transition: background-color 0.5s;
+    opacity: 1;
+}
+
+.double-letter {
+    background: linear-gradient(315deg, var(--pink-1), var(--pink-2));
+    color: white;
+}
+
+.triple-letter {
+    background: linear-gradient(315deg, var(--burg-1), var(--burg-2));
+    color: white;
+}
+
+.double-word {
+    background: linear-gradient(315deg, var(--gold-1), var(--gold-2));
+    color: white;
+}
+
+.triple-word {
+    background: linear-gradient(315deg, var(--dgreen-1), var(--dgreen-2));
+    color: white;
+}
