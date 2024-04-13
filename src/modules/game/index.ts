@@ -1,9 +1,9 @@
-export * from './tile_data';
-import { fetchWordSet } from './word_list_retrieval';
+export * from "./tile_data";
+import { fetchWordList } from "./word_list_retrieval";
 
-export { fetchWordSet };
-export * from './init'
-export * from './game'
-export * from './turn_processing'
-export * from './game_script'
-export * from './letter'
+export { fetchWordList };
+export * from "./init";
+export * from "./game";
+export * from "./turn_processing";
+export * from "./game_script";
+export * from "./letter";

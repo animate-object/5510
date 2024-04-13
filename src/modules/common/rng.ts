@@ -1,80 +1,44 @@
-import { Maybe } from ".";
-import { newPrng } from "../vendor/prng";
-import * as Storage from "./localStorage";
+import { NextRandom, newPrng } from "../vendor/prng";
+import { isBadWord } from "./bad_words";
+import * as Maybe from "./maybe";
 
-type SeedGenerator = () => string;
-
-const quickHashSeed = (seed: string): string => {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    const char = seed.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0;
-  }
-  return hash.toString();
+export const newRng = (seed: string): NextRandom => {
+  return newPrng(seed);
 };
 
-const newDateSeed = () => {
-  return quickHashSeed(Date.now().toString());
-};
-
-const getSeedFromUrl = (): Maybe.Maybe<string> => {
-  const url = new URL(window.location.href);
-  const base64Seed = Maybe.fromNullable(url.searchParams.get("seed"));
-  const decoded = Maybe.map(base64Seed, decodeURIComponent);
-  return Maybe.map(decoded, atob);
-};
-
-const getOrSetRngSeed = (fallbackSeed: SeedGenerator = newDateSeed): string => {
-  const key = "rngSeed";
-
-  const existingSeed = Storage.get(key, null);
-  if (existingSeed !== null) {
-    return existingSeed;
-  }
-  const newSeed = fallbackSeed();
-
-  Storage.set(key, newSeed);
-
-  return newSeed;
-};
-
-export const setGlobalRng = () => {
-  console.debug("Setting global RNG");
-
-  const urlSeed = getSeedFromUrl();
-  if (Maybe.isJust(urlSeed)) {
-    Storage.set("rngSeed", urlSeed);
-  }
-
-  const seed = getOrSetRngSeed(undefined);
+export const setGlobalRng = (seed: string): void => {
   (window as any).nextRandom = newPrng(seed);
 };
 
-setGlobalRng();
-
-const newRngAndReload = () => {
-  Storage.set("rngSeed", newDateSeed());
-  window.location.reload();
+export const buildSeedFromWordList = (
+  wordList: string[],
+  nWords: number,
+  random: NextRandom
+): string => {
+  let wordsLeft = nWords;
+  const words = [];
+  while (wordsLeft > 0) {
+    const word = wordList[Math.floor(random() * wordList.length)];
+    if (!isBadWord(word)) {
+      words.push(word);
+      wordsLeft--;
+    }
+  }
+  return words.join("-");
 };
 
-(window as any).newRngAndReload = newRngAndReload;
-
-export const getSeedForDisplay = () => {
-  const rawSeed = Storage.get("rngSeed", "No seed set");
-  return btoa(rawSeed);
-};
-
-export const clearSeedAndReload = () => {
-  Storage.remove("rngSeed");
+export const getSeedForDisplay = (): Maybe.Maybe<string> => {
   const url = new URL(window.location.href);
-  url.searchParams.delete("seed");
-  console.debug({
-    msg: "clearing seed",
-    url: url.toString(),
-    storageValue: Storage.get("rngSeed", "No seed set"),
-  });
+  const seed = url.searchParams.get("seed");
+  return Maybe.fromNullable(seed);
+};
 
+export const randomNewSeed = (wordList: string[], nWords: number): string => {
+  return buildSeedFromWordList(wordList, nWords, Math.random);
+};
+
+export const newGameFromSeed = (seed: string) => {
+  const url = new URL(window.location.href);
+  url.searchParams.set("seed", seed);
   window.location.href = url.toString();
-  setGlobalRng();
 };

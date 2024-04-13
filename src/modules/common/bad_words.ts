@@ -1,0 +1,10 @@
+// Overkill because I'm too much of a prude
+// to let these be indexed in my source code
+const badWords64 =
+  "YW5hbCxhbnVzLGFzcyxiaW1ib3MsYml0Y2gsYm9uZXIsYm9vYixib29icyxidXN0eSxidXR0LGNvY2ssY29ja3MsY29vbixjb29ucyxjdW0sY3VudCxkYXJraWUsZGljayxkaWxkbyxlcm90aWMsZmFnLGZhZ2dvdCxmZWNhbCxmdWNrLGdyb3BlLGhvbmtleSxob29rZXIsaG9ybnksaW5jZXN0LGtpa2UsbmlnZ2VyLG5pcHBsZSxudWRlLG51ZGl0eSxueW1waG8sb3JnYXNtLG9yZ3kscGFudHkscGVuaXMscG9vbixwb3JuLHBvcm5vLHB1YmVzLHB1c3N5LHJhcGUscmFwaW5nLHJhcGlzdCxyZWN0dW0sc2FkaXNtLHNjYXQsc2VtZW4sc2V4LHNleHVhbCxzaGl0LHNoaXR0eSxza2VldCxzbHV0LHNtdXQsc29kb215LHNwaWMsdGl0LHRpdHMsdGl0dHksdG9zc2VyLHR1c2h5LHR3YXQsdmFnaW5hLHZ1bHZhLHdob3Jl";
+
+const badWordsList = atob(badWords64).split(",");
+
+export const isBadWord = (word: string): boolean => {
+  return badWordsList.includes(word);
+};

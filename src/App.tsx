@@ -1,24 +1,27 @@
 import "./modules/common/rng.ts";
 import { useEffect, useRef, useState, useCallback } from "react";
 import "./App.css";
-import { type Grid, GridView } from "./modules/grid";
+import { GridView } from "./modules/grid";
 import {
-  DEFAULT_GRID_SIZE,
   GameCellAndCoords,
-  TileData,
+  GameGrid,
   attemptTurn,
-  fetchWordSet,
-  initialGrid,
+  initializeGameState,
 } from "./modules/game";
 import { GridTile, HandTile } from "./modules/display";
-import { Result } from "./modules/common";
+import { Maybe, Result } from "./modules/common";
 import { DirectionArrow } from "./modules/display/DirectionArrow";
-import { Bag, Hand, drawHand, newBag } from "./modules/game/bag.ts";
-import { getSeedForDisplay } from "./modules/common/rng.ts";
-import { QuickStatsPanel } from "./modules/display/QuickStatsPanel.tsx";
+import { HandAndBag } from "./modules/game/bag.ts";
+import {
+  QuickStatsPanel,
+  StatusMessage,
+} from "./modules/display/QuickStatsPanel.tsx";
 import classNames from "classnames";
+import { getSeedForDisplay } from "./modules/common/rng.ts";
+import { emojiFor } from "./modules/common/emoji.ts";
 
 const TOTAL_TURNS = 5;
+const GRID_SIZE = 6;
 
 interface LayoutDetails {
   cellSize: number;
@@ -27,6 +30,25 @@ interface LayoutDetails {
   aspectRatio: number;
   isPortrait: boolean;
 }
+
+const Status = {
+  warning: (message: string): StatusMessage => ({
+    message,
+    variant: "warning",
+  }),
+  success: (message: string): StatusMessage => ({
+    message: `${emojiFor("success")} ${message}`,
+    variant: "success",
+  }),
+  info: (message: string): StatusMessage => ({
+    message,
+    variant: "info",
+  }),
+  error: (message: string): StatusMessage => ({
+    message: `${emojiFor("error")} ${message}`,
+    variant: "warning",
+  }),
+};
 
 const computeLayoutDetails = (gridSize: number): LayoutDetails => {
   const gridSizeAccountingForHand = gridSize + 1.25;
@@ -49,58 +71,79 @@ const computeLayoutDetails = (gridSize: number): LayoutDetails => {
 };
 
 export function App() {
-  const gridSize = DEFAULT_GRID_SIZE;
-  const [grid, setGrid] = useState<Grid<TileData>>(() =>
-    initialGrid(gridSize, gridSize)
-  );
   const wordSet = useRef<Set<string>>(new Set());
-  const [bag, setBag] = useState<Bag>(newBag());
-  const [hand, setHand] = useState<Hand>({ handId: "-" } as any as Hand);
-  const [handsLeft, setHandsLeft] = useState<number>(TOTAL_TURNS);
-  const [turnsTaken, setTurnsTaken] = useState<number>(0);
+  const newGame = useRef<VoidFunction>(() => {
+    console.warn("New game not ready yet");
+  });
+  const [handsAndBags, setHandsAndBags] = useState<HandAndBag[]>([]);
+  const [turnIdx, setTurnIdx] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [grid, setGrid] = useState<GameGrid>();
   const [points, setPoints] = useState<number>(0);
-  const seedRef = useRef<string>(getSeedForDisplay());
-  const layout = useRef<LayoutDetails>(computeLayoutDetails(gridSize));
-  const { cellSize, isPortrait } = layout.current;
+  const [seed, setSeed] = useState<string>("");
+  const [layout, _setLayout] = useState<LayoutDetails>(
+    computeLayoutDetails(GRID_SIZE)
+  );
+  const { cellSize, isPortrait } = layout;
+  const [statusMessage, setStatusMessage] = useState<StatusMessage>({
+    message: "👋 Double tap to play across",
+    variant: "info",
+  });
 
   useEffect(() => {
-    const [firstHand, initialBag] = drawHand(5, bag);
-    setHand(firstHand);
-    setBag(initialBag);
-    setHandsLeft(handsLeft - 1);
-  }, []);
-
-  useEffect(() => {
-    fetchWordSet().then((result) => {
-      Result.map(result, (words) => {
-        wordSet.current = new Set(words);
-        (window as any).wordSet = words;
-      });
+    initializeGameState().then((result) => {
+      if (Result.isSuccess(result)) {
+        const { grid, handAndBagForEachTurn, wordList, nextGame } =
+          result.value;
+        wordSet.current = new Set(wordList);
+        newGame.current = nextGame;
+        setGrid(grid);
+        setHandsAndBags(handAndBagForEachTurn);
+        setLoading(false);
+      } else {
+        alert(result.message);
+      }
     });
   }, []);
 
   useEffect(() => {
-    if (turnsTaken >= TOTAL_TURNS && handsLeft < 1) {
-      const message = "Game Complete" + `Points: ${points}`;
-      alert(message);
+    if (!loading) {
+      Maybe.map(getSeedForDisplay(), (seed) => {
+        setSeed(seed);
+      });
     }
-  }, [turnsTaken, handsLeft, points]);
+  });
 
-  useEffect(() => {
-    console.log({ hand });
-  }, [hand.handId]);
+  const nextHand = useCallback(() => {
+    setTurnIdx(turnIdx + 1);
+  }, [turnIdx, handsAndBags]);
 
-  const drawNextHand = useCallback(() => {
-    const [hand, updatedBag] = drawHand(5, bag);
-    console.log("drawing next hand", hand, updatedBag);
-    setHand(hand);
-    setBag(updatedBag);
-    setHandsLeft(handsLeft - 1);
-  }, [bag, handsLeft, hand.handId]);
+  const setWarning = (message: string) => {
+    setStatusMessage(Status.warning(message));
+  };
+  const setSuccess = (message: string) => {
+    setStatusMessage(Status.success(message));
+  };
+  const setInfo = (message: string) => {
+    setStatusMessage(Status.info(message));
+  };
+  const setError = (message: string) => {
+    setStatusMessage(Status.error(message));
+  };
+
+  const handAndBag = handsAndBags[turnIdx];
+  const hand = handAndBag?.hand;
+  const handsLeft = handsAndBags.length - turnIdx;
+  const turnsTaken = turnIdx;
 
   const handleClickTile = (cell: GameCellAndCoords, direction: "s" | "e") => {
+    if (grid == null || hand == null) {
+      console.warn("Grid or hand not ready yet");
+      return;
+    }
+
     if (turnsTaken >= TOTAL_TURNS) {
-      alert("Game over, start a new game to continue playing.");
+      setInfo("😎 Game is over! Try 'New game''");
       return;
     }
 
@@ -121,21 +164,26 @@ export function App() {
     }
 
     if (Result.isFailure(result)) {
-      alert(result.message);
+      console.warn(result.message || "Unknown error");
+      if (result.message) {
+        setWarning(result.message);
+      } else {
+        setError("Oops! Something went wrong.");
+      }
       return;
     }
 
-    const { pointsScored, gameGrid } = result.value;
+    const { pointsScored, gameGrid, wordsPlayed } = result.value;
     setGrid(gameGrid);
     setPoints(points + pointsScored);
+    setSuccess(`${wordsPlayed} words played for ${pointsScored} points!`);
 
     if (handsLeft > 0) {
-      drawNextHand();
+      nextHand();
     }
-    setTurnsTaken(turnsTaken + 1);
   };
 
-  return (
+  return !loading && grid ? (
     <div
       className={classNames("app", {
         "likely-mobile": isPortrait,
@@ -147,8 +195,10 @@ export function App() {
         currentTurn={turnsTaken}
         totalTurns={TOTAL_TURNS}
         points={points}
-        gameSeed={seedRef.current}
-        version="0.0.3"
+        gameSeed={seed}
+        version="0.0.4"
+        onNewGame={newGame.current}
+        statusMessage={statusMessage}
       />
       <GridView
         grid={grid}
@@ -170,5 +220,7 @@ export function App() {
       </div>
       <DirectionArrow />
     </div>
+  ) : (
+    <h1>Loading...</h1>
   );
 }

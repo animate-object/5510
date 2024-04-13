@@ -149,7 +149,7 @@ function summarizePlacement(
         lettersPlayed.push(nextLetter);
       }
       if (nextLetter && currentLetter && nextLetter !== currentLetter) {
-        return Result.failure(`Illegal letter change at (${x},${y})`);
+        return Result.failure(`Can't replace letter (${x},${y})`);
       }
     }
   }

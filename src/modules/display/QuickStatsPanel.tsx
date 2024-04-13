@@ -1,7 +1,6 @@
 import React from "react";
 import "./QuickStatsPanel.css";
 import classNames from "classnames";
-import { clearSeedAndReload } from "../common/rng";
 
 interface PanelItemProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
@@ -30,6 +29,11 @@ export const PanelItem = ({
   );
 };
 
+export interface StatusMessage {
+  message: string;
+  variant: "success" | "warning" | "info";
+}
+
 interface QuickStatsProps {
   mode: "portrait" | "landscape";
   handsLeft: number;
@@ -38,6 +42,8 @@ interface QuickStatsProps {
   points: number;
   gameSeed: string;
   version: string;
+  onNewGame: () => void;
+  statusMessage: StatusMessage;
 }
 
 export function QuickStatsPanel({
@@ -48,6 +54,8 @@ export function QuickStatsPanel({
   points,
   gameSeed,
   version,
+  statusMessage,
+  onNewGame,
 }: QuickStatsProps) {
   const copyGameSeedUrl = () => {
     const url = new URL(window.location.href);
@@ -63,6 +71,11 @@ export function QuickStatsPanel({
       })}
     >
       <div className="quick-stats-panel-section">
+        <PanelItem className="version">V{version}</PanelItem>
+        <PanelItem onClick={() => copyGameSeedUrl()}>Board Link</PanelItem>
+        <PanelItem onClick={() => onNewGame()}>New Game</PanelItem>
+      </div>
+      <div className="quick-stats-panel-section">
         <PanelItem>Score: {points}</PanelItem>
         <PanelItem>
           Turn: {currentTurn}/{totalTurns}
@@ -70,15 +83,9 @@ export function QuickStatsPanel({
         <PanelItem>Hands Left: {handsLeft}</PanelItem>
       </div>
       <div className="quick-stats-panel-section">
-        <PanelItem
-          style={{
-            color: "var(--rainy-day)",
-          }}
-        >
-          V{version}
+        <PanelItem className={`status-${statusMessage.variant}`}>
+          {statusMessage.message}
         </PanelItem>
-        <PanelItem onClick={() => copyGameSeedUrl()}>Copy Game Link</PanelItem>
-        <PanelItem onClick={() => clearSeedAndReload()}>New Game</PanelItem>
       </div>
     </div>
   );

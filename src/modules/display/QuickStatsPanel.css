@@ -29,6 +29,7 @@
   margin: var(--spacing-1) 0;
   padding: 0 var(--spacing-1);
   display: flex;
+  border: 1px solid transparent;
 }
 .quick-stats-panel-item > * {
   margin: 0 var(--spacing-1);
@@ -50,4 +51,16 @@
 .active:focus {
   color: var(--ivory-2);
   background: var(--rainy-day);
+}
+
+.version {
+  color: var(--rainy-day);
+}
+
+.status-success {
+  color: var(--green-1);
+}
+
+.status-warning {
+  color: var(--burg-1);
 }

@@ -1,19 +1,21 @@
+import { NextRandom } from "../vendor/prng";
+
 export function array<T>(defaultValue: T, length: number): T[] {
-  return Array.from({ length }, () => defaultValue)
+  return Array.from({ length }, () => defaultValue);
 }
 
 export function empty<T>(): T[] {
-  return []
+  return [];
 }
 
-export function chooseOne<T>(array: T[]): T {
-  return array[Math.floor(nextRandom() * array.length)]
+export function chooseOne<T>(array: T[], random: NextRandom = nextRandom): T {
+  return array[random() * array.length];
 }
 
 export function shuffle<T>(array: T[]): T[] {
-  return array.sort(() => nextRandom() - 0.5)
+  return array.sort(() => nextRandom() - 0.5);
 }
 
 export function chooseN<T>(array: T[], n: number): T[] {
-  return shuffle(array).slice(0, n)
+  return shuffle(array).slice(0, n);
 }

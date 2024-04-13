@@ -19,6 +19,11 @@ export interface Hand {
   handId: string;
 }
 
+export interface HandAndBag {
+  hand: Hand;
+  bag: Bag;
+}
+
 function draw(
   n: number,
   category: "vowels" | "consonants",

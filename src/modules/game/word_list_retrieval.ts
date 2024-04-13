@@ -23,7 +23,7 @@ async function fetchWordListFromServer(
   }
 }
 
-async function loadWordList(
+export async function fetchWordList(
   listName: string = "default"
 ): Promise<Result.Result<string[]>> {
   const cachedList: string | null = localStorage.getItem(
@@ -46,9 +46,4 @@ async function loadWordList(
   console.info("Caching word list");
   localStorage.setItem(wordlistCacheKey(listName), JSON.stringify(words));
   return Result.success(words);
-}
-
-export async function fetchWordSet(): Promise<Result.Result<Set<string>>> {
-  const result = await loadWordList();
-  return Result.map(result, (words) => new Set(words));
 }

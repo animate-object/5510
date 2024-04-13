@@ -16,7 +16,7 @@ const onlyValidWordsRuleFactory = (wordSet: Set<string>): TurnRule => {
     );
 
     if (firstInvalidWord != null) {
-      return Result.failure(`Invalid word: "${firstInvalidWord.raw}"`);
+      return Result.failure(`"${firstInvalidWord.raw}" isn't in the word list`);
     } else {
       return Result.success(undefined);
     }
@@ -35,7 +35,7 @@ const onlyLettersInHandFactory = (hand: Hand): TurnRule => {
       (letter) => !lettersInHand.includes(letter)
     );
     if (firstMissingLetter != null) {
-      return Result.failure(`Letter "${firstMissingLetter}" not in hand.`);
+      return Result.failure(`No (${firstMissingLetter}) to play!`);
     } else {
       return Result.success(undefined);
     }
@@ -45,6 +45,7 @@ const onlyLettersInHandFactory = (hand: Hand): TurnRule => {
 interface TurnResult {
   gameGrid: GameGrid;
   pointsScored: number;
+  wordsPlayed: number;
 }
 
 function scoreWord(word: PlayedWord): number {
@@ -84,7 +85,7 @@ export function attemptTurn(
   const wordLength = word.length;
   const availableTiles = grid.walk(start, direction);
   if (availableTiles.length < wordLength) {
-    return Result.failure(`Not enough tiles to spell "${word}"`);
+    return Result.failure(`No room to play "${word}"`);
   }
 
   const tileSetters = word.split("").map((letter, i) => {
@@ -111,6 +112,7 @@ export function attemptTurn(
     return Result.success({
       gameGrid: newGrid,
       pointsScored: score,
+      wordsPlayed: turnResult.summary.wordsPlayed.length,
     });
   }
 }
