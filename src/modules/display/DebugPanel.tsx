@@ -111,7 +111,7 @@ export const DebugData = ({ data }: DebugDataProps): JSX.Element => {
 
 export function DebugPanel({ open }: Props): JSX.Element {
   const [data, setData] = useState<LogData>({} as LogData);
-  const [selectedTab, setSelectedTab] = useState<GlobalLogCat>("rng");
+  const [selectedTab, setSelectedTab] = useState<GlobalLogCat>("game.stat");
 
   useEffect(() => {
     setData(getLog());
@@ -120,12 +120,20 @@ export function DebugPanel({ open }: Props): JSX.Element {
   if (!open) {
     return <></>;
   }
+
+  const getTabs = (data: LogData): GlobalLogCat[] => {
+    let tabKeys = Object.keys(data) as GlobalLogCat[];
+    tabKeys.sort();
+    return tabKeys;
+  };
+
   return (
     <div className="debug-panel">
       <div className="panel-title">Debug Panel</div>
       <div className="panel-tabs">
-        {Object.keys(data).map((cat) => (
+        {getTabs(data).map((cat) => (
           <button
+            key={cat}
             className={classNames({ active: selectedTab === cat })}
             onClick={() => setSelectedTab(cat as GlobalLogCat)}
           >

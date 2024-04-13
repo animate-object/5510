@@ -5,11 +5,12 @@ declare global {
     | "game.init"
     | "game.turn"
     | "game.stat";
+  type ConfigCats = "config.wordList" | "config.scores" | "config.bag";
   export type LoggablePrim = string | number | boolean | null | undefined;
   export type LogDictEntry = LoggablePrim | LoggablePrim[];
   export type LogDict = Record<string, LogDictEntry>;
   export type Loggable = LoggablePrim | LogDict;
-  export type GlobalLogCat = "rng" | GameCats;
+  export type GlobalLogCat = "rng" | GameCats | ConfigCats;
 
   export type LogCategoryEntry = Loggable[];
   export type LogData = Record<GlobalLogCat, LogCategoryEntry>;

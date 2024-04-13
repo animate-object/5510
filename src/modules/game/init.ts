@@ -11,6 +11,9 @@ import {
 } from "../common/rng";
 import { Grid, newGrid, setTile, setTileInGrid } from "../grid";
 import { HandAndBag, drawHand, newBag } from "./bag";
+import { BAG_CONFIGS } from "./config/bag";
+import { SCORE_CONFIGS } from "./config/score";
+import { Letter } from "./letter";
 import { TileData, emptyTile, randomBonusTile } from "./tile_data";
 import { fetchWordList } from "./word_list_retrieval";
 
@@ -96,7 +99,6 @@ export const drawAllHands = (
 ): HandAndBag[] => {
   const hands = [];
   let bag = newBag();
-  console.log({ bag });
 
   log("game.hands", {
     State: "Initial",
@@ -139,6 +141,9 @@ interface InitArgs {
   handSize: number;
   // how many words are in a seed
   newSeedWordCount: number;
+
+  scoreConfig: Record<Letter, number>;
+  bagConfig: Record<Letter, number>;
 }
 
 const DEFAULTS: InitArgs = {
@@ -146,6 +151,8 @@ const DEFAULTS: InitArgs = {
   nTurns: 5,
   handSize: 5,
   newSeedWordCount: 5,
+  bagConfig: BAG_CONFIGS.DEFAULT,
+  scoreConfig: SCORE_CONFIGS.DEFAULT,
 };
 
 export const initializeGameState = async ({
@@ -153,6 +160,7 @@ export const initializeGameState = async ({
   nTurns,
   handSize,
   newSeedWordCount,
+  ...configs
 }: InitArgs = DEFAULTS): Promise<Result.Result<InitState>> => {
   initGlobalLogger();
   const wordListResult = await fetchWordList();
@@ -165,9 +173,16 @@ export const initializeGameState = async ({
   const grid = initialGrid(gridSize, gridSize);
   const handAndBagForEachTurn = drawAllHands(nTurns, handSize);
 
-  // handAndBagForEachTurn.forEach(({ hand }) => {
-  //   log("game.hands", hand.handId);
-  // });
+  log("config.scores", configs.scoreConfig);
+  log("config.bag", configs.bagConfig);
+
+  log("config.wordList", {
+    "Word Count": wordList.length,
+    ...[6, 5, 4, 3, 2].reduce<Record<string, number>>((acc, n) => {
+      acc[`${n} Letter Words`] = wordList.filter((w) => w.length === n).length;
+      return acc;
+    }, {}),
+  });
 
   return Result.success({
     wordList,
