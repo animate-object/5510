@@ -115,6 +115,7 @@ export function App() {
   const displayTime = getTimerDisplay(timeRemaining);
 
   const displayTurn = Math.min(turnIdx + 1, TOTAL_TURNS);
+  const minutesLeft = Math.floor(timeRemaining / 60);
 
   useEffect(() => {
     initializeGameState().then((result) => {
@@ -192,6 +193,15 @@ export function App() {
   const nextHand = useCallback(() => {
     setTurnIdx(turnIdx + 1);
   }, [turnIdx, handsAndBags]);
+
+  useEffect(() => {
+    log("game.stat", {
+      "game state": gameState,
+      "turns taken": turnIdx,
+      "points scored": points,
+      "minutes left": minutesLeft,
+    });
+  }, [turnIdx, gameState, points, minutesLeft]);
 
   const setWarning = (message: string) => {
     setStatusMessage(Status.warning(message));
@@ -284,7 +294,7 @@ export function App() {
         totalTurns={TOTAL_TURNS}
         points={points}
         gameSeed={seed}
-        version="0.2.1"
+        version="0.3.1"
         timerDisplay={displayTime}
         timerWarning={timeRemaining <= 60}
         statusMessage={statusMessage}

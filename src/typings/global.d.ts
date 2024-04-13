@@ -1,5 +1,10 @@
 declare global {
-  type GameCats = "game.hands" | "game.seed" | "game.init" | "game.turn";
+  type GameCats =
+    | "game.hands"
+    | "game.seed"
+    | "game.init"
+    | "game.turn"
+    | "game.stat";
   export type LoggablePrim = string | number | boolean | null | undefined;
   export type LogDictEntry = LoggablePrim | LoggablePrim[];
   export type LogDict = Record<string, LogDictEntry>;
