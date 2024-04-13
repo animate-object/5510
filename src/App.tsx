@@ -211,7 +211,7 @@ export function App() {
         totalTurns={TOTAL_TURNS}
         points={points}
         gameSeed={seed}
-        version="0.1.0"
+        version="0.1.1"
         onNewGame={newGame.current}
         statusMessage={statusMessage}
       />
