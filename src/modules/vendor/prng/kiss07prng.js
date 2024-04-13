@@ -54,7 +54,9 @@ export default function KISS07() {
   };
 
   var random = function () {
-    return uint32() * 2.3283064365386963e-10; // 2^-32
+    const val = uint32() * 2.3283064365386963e-10; // 2^-32
+    console.debug(`Rng value: ${val}`);
+    return val;
   };
   random.uint32 = uint32;
   random.fract53 = function () {

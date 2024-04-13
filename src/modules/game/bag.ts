@@ -31,9 +31,7 @@ function draw(
 ): [Letter[], Bag] {
   const { drawn, left } = bag;
 
-  const shuffled = Arrays.shuffle(left[category]);
-  const drawnLetters = shuffled.slice(0, n);
-  const remainingLetters = shuffled.slice(n);
+  const [drawnLetters, remainingLetters] = Arrays.chooseN(left[category], n);
 
   const newBag = {
     drawn: {

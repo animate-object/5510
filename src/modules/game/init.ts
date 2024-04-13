@@ -156,6 +156,10 @@ export const initializeGameState = async ({
   const grid = initialGrid(gridSize, gridSize);
   const handAndBagForEachTurn = drawAllHands(nTurns, handSize);
 
+  handAndBagForEachTurn.forEach(({ hand }) => {
+    console.log(hand.handId);
+  });
+
   return Result.success({
     wordList,
     grid,

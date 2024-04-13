@@ -16,6 +16,19 @@ export function shuffle<T>(array: T[]): T[] {
   return array.sort(() => nextRandom() - 0.5);
 }
 
-export function chooseN<T>(array: T[], n: number): T[] {
-  return shuffle(array).slice(0, n);
+// Shuffling really burns through the RnG
+// offering more chances for non-determinism
+// export function chooseNOld<T>(array: T[], n: number): T[] {
+//   return shuffle(array).slice(0, n);
+// }
+
+export function chooseN<T>(array: T[], n: number): [T[], T[]] {
+  let remaining = [...array];
+  let result = [];
+  while (result.length < n) {
+    const idx = Math.floor(nextRandom() * remaining.length);
+    result.push(remaining[idx]);
+    remaining = [...remaining.slice(0, idx), ...remaining.slice(idx + 1)];
+  }
+  return [result, remaining];
 }

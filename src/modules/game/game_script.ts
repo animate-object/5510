@@ -6,6 +6,20 @@ import { Bonus, letterTileFromChar } from "./tile_data";
 import { validateTurn } from "./turn_processing";
 import { baseScore } from "./letter";
 
+const atLeastOneWordRule: TurnRule = (summary) => {
+  const { wordsPlayed, lettersPlayed } = summary;
+  if (wordsPlayed.length === 0) {
+    if (lettersPlayed) {
+      // edge case, one letter is played and no words are detected
+      // but doesn't fail other rules...
+      return Result.failure(`${lettersPlayed[0]} is not in the word list.`);
+    }
+    return Result.failure("No words played");
+  } else {
+    return Result.success(undefined);
+  }
+};
+
 const onlyValidWordsRuleFactory = (wordSet: Set<string>): TurnRule => {
   return (summary) => {
     const { wordsPlayed } = summary;
@@ -102,6 +116,7 @@ export function attemptTurn(
   const turnResult = validateTurn(grid, newGrid, [
     onlyLettersInHandFactory(hand),
     onlyValidWordsRuleFactory(wordSet),
+    atLeastOneWordRule,
   ]);
 
   if (turnResult.kind === "invalid") {

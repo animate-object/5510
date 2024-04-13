@@ -10,7 +10,6 @@ import {
 } from "./modules/game";
 import { GridTile, HandTile } from "./modules/display";
 import { Maybe, Result } from "./modules/common";
-import { DirectionArrow } from "./modules/display/DirectionArrow";
 import { HandAndBag } from "./modules/game/bag.ts";
 import {
   QuickStatsPanel,
@@ -90,6 +89,8 @@ export function App() {
     variant: "info",
   });
 
+  const displayTurn = Math.min(turnIdx + 1, TOTAL_TURNS);
+
   useEffect(() => {
     initializeGameState().then((result) => {
       if (Result.isSuccess(result)) {
@@ -113,7 +114,20 @@ export function App() {
         setSeed(seed);
       });
     }
-  });
+  }, [loading]);
+
+  useEffect(() => {
+    if (turnIdx === TOTAL_TURNS) {
+      setTimeout(() => {
+        alert(
+          "Game complete! 🎉\n" +
+            `You scored ${points} points in ${TOTAL_TURNS} turns.` +
+            "\n\n" +
+            "Click 'New game' to start again."
+        );
+      });
+    }
+  }, [turnIdx, points]);
 
   const nextHand = useCallback(() => {
     setTurnIdx(turnIdx + 1);
@@ -193,7 +207,7 @@ export function App() {
       <QuickStatsPanel
         mode={isPortrait ? "portrait" : "landscape"}
         handsLeft={handsLeft}
-        currentTurn={turnsTaken}
+        currentTurn={displayTurn}
         totalTurns={TOTAL_TURNS}
         points={points}
         gameSeed={seed}
@@ -219,7 +233,6 @@ export function App() {
           ))}
         </div>
       </div>
-      <DirectionArrow />
     </div>
   ) : (
     <h1>Loading...</h1>
