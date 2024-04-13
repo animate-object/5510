@@ -6,6 +6,7 @@ import {
   GameCellAndCoords,
   GameGrid,
   attemptTurn,
+  describeGameGrid,
   initializeGameState,
 } from "./modules/game";
 import { GridTile, HandTile } from "./modules/display";
@@ -18,6 +19,7 @@ import {
 import classNames from "classnames";
 import { getSeedForDisplay } from "./modules/common/rng.ts";
 import { emojiFor } from "./modules/common/emoji.ts";
+import { DebugPanel } from "./modules/display/DebugPanel.tsx";
 
 const TOTAL_TURNS = 5;
 const GRID_SIZE = 6;
@@ -75,11 +77,19 @@ const getTimerDisplay = (time: number): string => {
   return [minutes, seconds].map((n) => n.toString().padStart(2, "0")).join(":");
 };
 
+const getQueryParam = (key: string): string | null => {
+  const url = new URL(window.location.href);
+  return url.searchParams.get(key);
+};
+
 export function App() {
   const wordSet = useRef<Set<string>>(new Set());
   const newGame = useRef<VoidFunction>(() => {
     console.warn("New game not ready yet");
   });
+  const [debugMode, _setDebugMode] = useState<boolean>(
+    getQueryParam("q") != null
+  );
   const [handsAndBags, setHandsAndBags] = useState<HandAndBag[]>([]);
   const [turnIdx, setTurnIdx] = useState<number>(0);
   const [grid, setGrid] = useState<GameGrid>();
@@ -101,6 +111,7 @@ export function App() {
     | "done.outOfTime"
   >("initializing");
   const [timeRemaining, setTimeRemaining] = useState<number>(10 * 60);
+  const [showDebugPanel, setShowDebugPanel] = useState<boolean>(false);
   const displayTime = getTimerDisplay(timeRemaining);
 
   const displayTurn = Math.min(turnIdx + 1, TOTAL_TURNS);
@@ -110,7 +121,7 @@ export function App() {
       if (Result.isSuccess(result)) {
         const { grid, handAndBagForEachTurn, wordList, nextGame } =
           result.value;
-        console.log({ grid, handAndBagForEachTurn, wordList, nextGame });
+        log("game.init", describeGameGrid(grid));
         wordSet.current = new Set(wordList);
         newGame.current = nextGame;
         setGrid(grid);
@@ -290,6 +301,7 @@ export function App() {
           />
         )}
       />
+      {}
       <div className="hug-bottom">
         <div className="hand">
           {hand?.letters?.map((letter, i) => (
@@ -297,6 +309,19 @@ export function App() {
           ))}
         </div>
       </div>
+      {debugMode && (
+        <>
+          <DebugPanel open={showDebugPanel} />
+          <div className="debug-panel-toggle">
+            <button
+              onClick={() => setShowDebugPanel(!showDebugPanel)}
+              className="debug-panel-bottom"
+            >
+              Q
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -1,0 +1,95 @@
+.debug-panel {
+  font-family: "Roboto Mono", monospace;
+  position: absolute;
+  top: 1vh;
+  left: 1vw;
+  padding: var(--spacing-2);
+  background-color: var(--ivory);
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .debug-panel {
+    top: 1vh;
+    left: 1vw;
+    right: 1vw;
+    min-height: 50vh;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+}
+
+.panel-title {
+  font-size: var(--font-size-2);
+  font-weight: bold;
+  margin-bottom: var(--spacing-1);
+}
+
+.panel-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  /* justify-content: space-between; */
+  margin-bottom: var(--spacing-1);
+}
+
+.panel-tabs > button {
+  border: 1px solid var(--charcoal);
+  background-color: var(--ivory);
+  border-radius: 4px;
+  margin: var(--spacing-1);
+  font-size: var(--font-size-1);
+  cursor: pointer;
+}
+
+.panel-tabs > button.active {
+  background-color: var(--lblue-1);
+  color: var(--dblue-2);
+}
+
+.debug-data {
+  min-height: 50vh;
+  min-width: 50vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  font-size: 0.8rem;
+}
+
+.debug-log-entry {
+  position: relative;
+  margin: var(--spacing-1);
+  padding: var(--spacing-1);
+  border-radius: 2px;
+  color: var(--dblue-2);
+  border: 1px solid var(--dblue-2);
+}
+
+.debug-dict-entry-item {
+  display: flex;
+  /* justify-content: space-between; */
+  margin: var(--spacing-1);
+}
+
+.debug-dict-entry-key {
+  font-weight: bold;
+  margin-right: var(--spacing-1);
+  color: var(--dgreen-1);
+}
+
+.debug-number {
+  color: var(--burg-1);
+}
+
+.debug-string {
+  color: var(--lblue-2);
+}
+
+.debug-boolean {
+  color: var(--gold-1);
+}
+
+.log-idx {
+  font-size: 0.6rem;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}

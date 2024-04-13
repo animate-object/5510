@@ -1,7 +1,7 @@
 import { Result } from "../common";
 import { Coords, setTile, setTilesInGrid } from "../grid";
 import { Hand } from "./bag";
-import { GameGrid, PlayedWord, TurnRule } from "./game";
+import { GameGrid, PlayedWord, TurnRule, describePlayedWord } from "./game";
 import { Bonus, letterTileFromChar } from "./tile_data";
 import { validateTurn } from "./turn_processing";
 import { baseScore } from "./letter";
@@ -23,8 +23,6 @@ const atLeastOneWordRule: TurnRule = (summary) => {
 const onlyValidWordsRuleFactory = (wordSet: Set<string>): TurnRule => {
   return (summary) => {
     const { wordsPlayed } = summary;
-    console.debug("Played words", wordsPlayed);
-
     const firstInvalidWord = wordsPlayed.find(
       (word) => !wordSet.has(word.raw.toLowerCase())
     );
@@ -78,7 +76,17 @@ function scoreWord(word: PlayedWord): number {
 }
 
 function scoreTurn(wordsPlayed: PlayedWord[]): number {
-  return wordsPlayed.reduce((acc, word) => acc + scoreWord(word), 0);
+  const scoredWords = wordsPlayed.map((word) => ({
+    word: word,
+    score: scoreWord(word),
+  }));
+
+  log("game.turn", {
+    wordCount: scoredWords.length,
+    words: scoredWords.map((w) => `${describePlayedWord(w.word)} → ${w.score}`),
+  });
+
+  return scoredWords.reduce((acc, { score }) => acc + score, 0);
 }
 
 export function attemptTurn(

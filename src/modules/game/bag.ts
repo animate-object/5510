@@ -56,7 +56,7 @@ function drawConsonants(n: number, bag: Bag): [Letter[], Bag] {
 }
 
 export function newBag(
-  letterCounts: Record<Letter, number> = BAG_CONFIGS.BETTER
+  letterCounts: Record<Letter, number> = BAG_CONFIGS.DEFAULT
 ): Bag {
   const { vowels, consonants } = Object.entries(letterCounts).reduce(
     (acc, [letter, count]) => {

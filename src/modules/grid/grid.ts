@@ -105,7 +105,7 @@ function setTilesInGrid<T>(
       return Result.failure(`Invalid coordinates: (${x}, ${y})`);
     }
     const oldValue = newRows[y][x].data;
-    newRows[y][x] = cellOf({...oldValue, ...value});
+    newRows[y][x] = cellOf({ ...oldValue, ...value });
   });
   return Result.success(updateGrid(newRows, grid));
 }
@@ -173,4 +173,4 @@ const buildGrid = <T>(
 
 export type { Cell, Grid, Coords };
 
-export { coords, newGrid, setTile, setTileInGrid, setTilesInGrid};
+export { coords, newGrid, setTile, setTileInGrid, setTilesInGrid };

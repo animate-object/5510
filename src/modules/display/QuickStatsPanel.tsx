@@ -69,24 +69,31 @@ export function QuickStatsPanel({
 
   const panelSections: Record<string, React.ReactNode[]> = {
     links: [
-      <PanelItem className="version">V{version}</PanelItem>,
-      <PanelItem onClick={() => copyGameSeedUrl()}>Board Link</PanelItem>,
-      <PanelItem onClick={() => onNewGame()}>New Game</PanelItem>,
+      <PanelItem key="version" className="version">
+        V{version}
+      </PanelItem>,
+      <PanelItem key="board-link" onClick={() => copyGameSeedUrl()}>
+        Board Link
+      </PanelItem>,
+      <PanelItem key="new-game" onClick={() => onNewGame()}>
+        New Game
+      </PanelItem>,
     ],
     stats: [
-      <PanelItem>Score: {points}</PanelItem>,
-      <PanelItem>
+      <PanelItem key="score">Score: {points}</PanelItem>,
+      <PanelItem key="turn">
         Turn: {currentTurn}/{totalTurns}
       </PanelItem>,
-      <PanelItem>Hands Left: {handsLeft}</PanelItem>,
+      <PanelItem key="hands">Hands Left: {handsLeft}</PanelItem>,
     ],
     status: [
       <PanelItem
+        key="timer"
         className={classNames("timer", { "timer-almost-done": timerWarning })}
       >
         {timerDisplay}
       </PanelItem>,
-      <PanelItem className={`status-${statusMessage.variant}`}>
+      <PanelItem key="status" className={`status-${statusMessage.variant}`}>
         {statusMessage.message}
       </PanelItem>,
     ],

@@ -29,3 +29,17 @@
 .hand > * {
   margin: 0 var(--spacing-1);
 }
+
+.debug-panel-toggle {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  margin: 0;
+}
+
+.debug-panel-bottom {
+  background-color: var(--ivory);
+  border-radius: var(--spacing-1);
+  height: 2rem;
+  z-index: 100;
+}

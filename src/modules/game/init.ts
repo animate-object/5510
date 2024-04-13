@@ -1,6 +1,7 @@
 /// Utilities for initializing game state
 
 import { Arrays, Maybe, Result } from "../common";
+import { initGlobalLogger } from "../common/log";
 import {
   buildSeedFromWordList,
   newGameFromSeed,
@@ -43,20 +44,6 @@ export const initialGrid = (
   return grid;
 };
 
-// initialize everything!
-// need one function (composed of many) to:
-// - fetch word bank
-// - initialize and set global rng
-// - initialize grid
-// - initialize bag
-// - draw all hands
-// I'm thinking this function can run in a useEffect in App.tsx
-// and set all the state variables
-// until this function is done, the app should show a loading screen
-//
-// I want to use this approach in part because I want to use the word
-// bank as input to the rng seed
-
 const getSeedFromUrl = (): Maybe.Maybe<string> => {
   const url = new URL(window.location.href);
   const maybeSeed = Maybe.fromNullable(url.searchParams.get("seed"));
@@ -72,8 +59,8 @@ const getSeedFromUrl = (): Maybe.Maybe<string> => {
 };
 
 const getTimeBasedSeed = (wordList: string[], nWords: number): string => {
-  const todaysDate = new Date().toISOString().split("T")[0];
-  const tmpRng = newRng(todaysDate);
+  const todayLocalDate = new Date().toLocaleDateString();
+  const tmpRng = newRng(todayLocalDate);
   return buildSeedFromWordList(wordList, nWords, tmpRng);
 };
 
@@ -89,11 +76,17 @@ const initializeRng = (wordList: string[], nWords: number): void => {
       `    Seed from URL: ${seedFromUrl}\n` +
       `    Will use ${willUseMsg}       `
   );
+  log("game.seed", {
+    "today's seed": todaysSeed,
+    "seed from url": seedFromUrl,
+  });
 
   if (seedFromUrl) {
     setGlobalRng(seedFromUrl);
   } else {
-    window.location.search = `?seed=${todaysSeed}`;
+    const url = new URL(window.location.href);
+    url.searchParams.set("seed", todaysSeed);
+    window.location.href = url.toString();
   }
 };
 
@@ -103,11 +96,27 @@ export const drawAllHands = (
 ): HandAndBag[] => {
   const hands = [];
   let bag = newBag();
+  console.log({ bag });
+
+  log("game.hands", {
+    State: "Initial",
+    "Letter Count": bag.left.vowels.length + bag.left.consonants.length,
+    "Vowel Count": bag.left.vowels.length,
+    "Consonant Count": bag.left.consonants.length,
+  });
 
   for (let i = 0; i < nTurns; i++) {
     const [hand, updatedBag] = drawHand(handSize, bag);
     hands.push({ hand, bag: updatedBag });
     bag = updatedBag;
+    log("game.hands", `Draw #${i + 1} → ${hand.handId}`);
+    log("game.hands", {
+      State: `After Draw ${i + 1}`,
+      "Vowels remaining": updatedBag.left.vowels.length,
+      "Consonants remaining": updatedBag.left.consonants.length,
+      "Total remaining":
+        updatedBag.left.vowels.length + updatedBag.left.consonants.length,
+    });
   }
 
   return hands;
@@ -145,6 +154,7 @@ export const initializeGameState = async ({
   handSize,
   newSeedWordCount,
 }: InitArgs = DEFAULTS): Promise<Result.Result<InitState>> => {
+  initGlobalLogger();
   const wordListResult = await fetchWordList();
   if (Result.isFailure(wordListResult)) {
     return wordListResult;
@@ -155,9 +165,9 @@ export const initializeGameState = async ({
   const grid = initialGrid(gridSize, gridSize);
   const handAndBagForEachTurn = drawAllHands(nTurns, handSize);
 
-  handAndBagForEachTurn.forEach(({ hand }) => {
-    console.log(hand.handId);
-  });
+  // handAndBagForEachTurn.forEach(({ hand }) => {
+  //   log("game.hands", hand.handId);
+  // });
 
   return Result.success({
     wordList,

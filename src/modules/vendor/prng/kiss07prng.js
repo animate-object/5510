@@ -55,7 +55,7 @@ export default function KISS07() {
 
   var random = function () {
     const val = uint32() * 2.3283064365386963e-10; // 2^-32
-    console.debug(`Rng value: ${val}`);
+    log('rng', val);
     return val;
   };
   random.uint32 = uint32;
