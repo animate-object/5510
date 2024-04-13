@@ -69,6 +69,12 @@ const computeLayoutDetails = (gridSize: number): LayoutDetails => {
   };
 };
 
+const getTimerDisplay = (time: number): string => {
+  const minutes = Math.floor(time / 60);
+  const seconds = time % 60;
+  return [minutes, seconds].map((n) => n.toString().padStart(2, "0")).join(":");
+};
+
 export function App() {
   const wordSet = useRef<Set<string>>(new Set());
   const newGame = useRef<VoidFunction>(() => {
@@ -76,7 +82,6 @@ export function App() {
   });
   const [handsAndBags, setHandsAndBags] = useState<HandAndBag[]>([]);
   const [turnIdx, setTurnIdx] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(true);
   const [grid, setGrid] = useState<GameGrid>();
   const [points, setPoints] = useState<number>(0);
   const [seed, setSeed] = useState<string>("");
@@ -88,6 +93,15 @@ export function App() {
     message: "👋 Double tap to play across",
     variant: "info",
   });
+  const [gameState, setGameState] = useState<
+    | "initializing"
+    | "error"
+    | "playing"
+    | "done.playedAllHands"
+    | "done.outOfTime"
+  >("initializing");
+  const [timeRemaining, setTimeRemaining] = useState<number>(10 * 60);
+  const displayTime = getTimerDisplay(timeRemaining);
 
   const displayTurn = Math.min(turnIdx + 1, TOTAL_TURNS);
 
@@ -101,7 +115,7 @@ export function App() {
         newGame.current = nextGame;
         setGrid(grid);
         setHandsAndBags(handAndBagForEachTurn);
-        setLoading(false);
+        setGameState("playing");
       } else {
         alert(result.message);
       }
@@ -109,25 +123,57 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (!loading) {
+    if (gameState === "playing" && seed === "") {
       Maybe.map(getSeedForDisplay(), (seed) => {
         setSeed(seed);
       });
     }
-  }, [loading]);
+  }, [gameState, seed]);
+
+  useEffect(() => {
+    if (gameState === "playing") {
+      const timer = setInterval(() => {
+        setTimeRemaining((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [gameState]);
+
+  useEffect(() => {
+    if (timeRemaining <= 0 && gameState === "playing") {
+      setGameState("done.outOfTime");
+    }
+  }, [timeRemaining, gameState]);
 
   useEffect(() => {
     if (turnIdx === TOTAL_TURNS) {
-      setTimeout(() => {
-        alert(
-          "Game complete! 🎉\n" +
-            `You scored ${points} points in ${TOTAL_TURNS} turns.` +
-            "\n\n" +
-            "Click 'New game' to start again."
-        );
-      });
+      setGameState("done.playedAllHands");
     }
-  }, [turnIdx, points]);
+  }, [turnIdx]);
+
+  useEffect(() => {
+    if (gameState.startsWith("done")) {
+      const reasonMessage =
+        gameState === "done.playedAllHands"
+          ? "You played all your hands!"
+          : "You ran out of time!";
+      const finalScoreMessage = `You scored ${points} points!`;
+      const timeRemainingMessage =
+        timeRemaining > 0 ? `With ${displayTime} left on the clock.\n` : null;
+      const turnsRemainingMessage =
+        turnsTaken < TOTAL_TURNS
+          ? `You had ${TOTAL_TURNS - turnsTaken} turns left.`
+          : null;
+
+      const message =
+        "🎉 Game Complete\n" +
+        `${reasonMessage}\n` +
+        `${finalScoreMessage}\n` +
+        `${timeRemainingMessage || turnsRemainingMessage || ""}\n` +
+        "Press 'New game' to play again!";
+      alert(message);
+    }
+  }, [gameState, points]);
 
   const nextHand = useCallback(() => {
     setTurnIdx(turnIdx + 1);
@@ -148,7 +194,7 @@ export function App() {
 
   const handAndBag = handsAndBags[turnIdx];
   const hand = handAndBag?.hand;
-  const handsLeft = handsAndBags.length - turnIdx;
+  const handsLeft = handsAndBags.length - turnIdx - 1;
   const turnsTaken = turnIdx;
 
   const handleClickTile = (cell: GameCellAndCoords, direction: "s" | "e") => {
@@ -198,7 +244,22 @@ export function App() {
     }
   };
 
-  return !loading && grid ? (
+  const showGame = [
+    "playing",
+    "done.playedAllHands",
+    "done.outOfTime",
+  ].includes(gameState);
+
+  if (!showGame) {
+    if (gameState === "initializing") {
+      return <h1>Loading...</h1>;
+    }
+    if (gameState === "error") {
+      return <h1>Oops! Something went wrong.</h1>;
+    }
+  }
+
+  return (
     <div
       className={classNames("app", {
         "likely-mobile": isPortrait,
@@ -211,12 +272,14 @@ export function App() {
         totalTurns={TOTAL_TURNS}
         points={points}
         gameSeed={seed}
-        version="0.1.1"
-        onNewGame={newGame.current}
+        version="0.2.0"
+        timerDisplay={displayTime}
+        timerWarning={timeRemaining <= 60}
         statusMessage={statusMessage}
+        onNewGame={newGame.current}
       />
       <GridView
-        grid={grid}
+        grid={grid!}
         cellSizePx={cellSize}
         renderCell={(cell, coords, cellSizePx) => (
           <GridTile
@@ -234,7 +297,5 @@ export function App() {
         </div>
       </div>
     </div>
-  ) : (
-    <h1>Loading...</h1>
   );
 }

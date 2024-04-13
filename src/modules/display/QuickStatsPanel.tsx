@@ -42,6 +42,8 @@ interface QuickStatsProps {
   points: number;
   gameSeed: string;
   version: string;
+  timerDisplay: string;
+  timerWarning: boolean;
   onNewGame: () => void;
   statusMessage: StatusMessage;
 }
@@ -55,6 +57,8 @@ export function QuickStatsPanel({
   gameSeed,
   version,
   statusMessage,
+  timerWarning,
+  timerDisplay,
   onNewGame,
 }: QuickStatsProps) {
   const copyGameSeedUrl = () => {
@@ -63,6 +67,36 @@ export function QuickStatsPanel({
     navigator.clipboard.writeText(url.toString());
   };
 
+  const panelSections: Record<string, React.ReactNode[]> = {
+    links: [
+      <PanelItem className="version">V{version}</PanelItem>,
+      <PanelItem onClick={() => copyGameSeedUrl()}>Board Link</PanelItem>,
+      <PanelItem onClick={() => onNewGame()}>New Game</PanelItem>,
+    ],
+    stats: [
+      <PanelItem>Score: {points}</PanelItem>,
+      <PanelItem>
+        Turn: {currentTurn}/{totalTurns}
+      </PanelItem>,
+      <PanelItem>Hands Left: {handsLeft}</PanelItem>,
+    ],
+    status: [
+      <PanelItem
+        className={classNames("timer", { "timer-almost-done": timerWarning })}
+      >
+        {timerDisplay}
+      </PanelItem>,
+      <PanelItem className={`status-${statusMessage.variant}`}>
+        {statusMessage.message}
+      </PanelItem>,
+    ],
+  };
+
+  const order =
+    mode === "portrait"
+      ? ["links", "stats", "status"]
+      : ["status", "stats", "links"];
+
   return (
     <div
       className={classNames("quick-stats-panel", {
@@ -70,23 +104,11 @@ export function QuickStatsPanel({
         landscape: mode === "landscape",
       })}
     >
-      <div className="quick-stats-panel-section">
-        <PanelItem className="version">V{version}</PanelItem>
-        <PanelItem onClick={() => copyGameSeedUrl()}>Board Link</PanelItem>
-        <PanelItem onClick={() => onNewGame()}>New Game</PanelItem>
-      </div>
-      <div className="quick-stats-panel-section">
-        <PanelItem>Score: {points}</PanelItem>
-        <PanelItem>
-          Turn: {currentTurn}/{totalTurns}
-        </PanelItem>
-        <PanelItem>Hands Left: {handsLeft}</PanelItem>
-      </div>
-      <div className="quick-stats-panel-section">
-        <PanelItem className={`status-${statusMessage.variant}`}>
-          {statusMessage.message}
-        </PanelItem>
-      </div>
+      {order.map((section) => (
+        <div key={section} className="quick-stats-panel-section">
+          {panelSections[section]}
+        </div>
+      ))}
     </div>
   );
 }
