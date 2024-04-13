@@ -171,7 +171,10 @@ export function App() {
         `${finalScoreMessage}\n` +
         `${timeRemainingMessage || turnsRemainingMessage || ""}\n` +
         "Press 'New game' to play again!";
-      alert(message);
+      setTimeout(() => {
+        alert(message);
+        setSuccess("Game complete!");
+      }, 400);
     }
   }, [gameState, points]);
 
@@ -194,7 +197,7 @@ export function App() {
 
   const handAndBag = handsAndBags[turnIdx];
   const hand = handAndBag?.hand;
-  const handsLeft = handsAndBags.length - turnIdx - 1;
+  const handsLeft = Math.max(handsAndBags.length - turnIdx - 1, 0);
   const turnsTaken = turnIdx;
 
   const handleClickTile = (cell: GameCellAndCoords, direction: "s" | "e") => {
@@ -239,9 +242,7 @@ export function App() {
     setPoints(points + pointsScored);
     setSuccess(`${wordsPlayed} words played for ${pointsScored} points!`);
 
-    if (handsLeft > 0) {
-      nextHand();
-    }
+    nextHand();
   };
 
   const showGame = [
@@ -272,7 +273,7 @@ export function App() {
         totalTurns={TOTAL_TURNS}
         points={points}
         gameSeed={seed}
-        version="0.2.0"
+        version="0.2.1"
         timerDisplay={displayTime}
         timerWarning={timeRemaining <= 60}
         statusMessage={statusMessage}

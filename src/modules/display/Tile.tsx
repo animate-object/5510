@@ -78,11 +78,6 @@ export const ClickableTile = ({
   const handleInteraction = () => {
     const currentTime = Date.now();
     const elapsedTime = currentTime - lastInteractionTime;
-    console.log({
-      currentTime,
-      lastInteractionTime,
-      elapsedTime,
-    });
 
     // Clear previous timer if it exists
     if (interactionTimer) {
@@ -98,7 +93,6 @@ export const ClickableTile = ({
       const timer = setTimeout(() => {
         handleClick("s");
       }, interactionTimeout);
-      console.log("Setting timer");
       setInteractionTimer(timer);
       setLastInteractionTime(currentTime);
     }

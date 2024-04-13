@@ -41,10 +41,6 @@ const onlyLettersInHandFactory = (hand: Hand): TurnRule => {
   return (summary) => {
     const { lettersPlayed } = summary;
     const { letters: lettersInHand } = hand;
-    console.log({
-      lettersPlayed,
-      lettersInHand,
-    });
     const firstMissingLetter = lettersPlayed.find(
       (letter) => !lettersInHand.includes(letter)
     );

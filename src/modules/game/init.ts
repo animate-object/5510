@@ -105,7 +105,6 @@ export const drawAllHands = (
   let bag = newBag();
 
   for (let i = 0; i < nTurns; i++) {
-    console.log("Drawing hand", i + 1, "of", nTurns);
     const [hand, updatedBag] = drawHand(handSize, bag);
     hands.push({ hand, bag: updatedBag });
     bag = updatedBag;
