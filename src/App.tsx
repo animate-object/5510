@@ -234,7 +234,9 @@ export function App() {
 
     const displayDirection = direction === "s" ? "down" : "across";
     const word =
-      prompt(`Enter a word to place ${displayDirection}`)?.toUpperCase() || "";
+      prompt(`Enter a word to place ${displayDirection}`)
+        ?.toUpperCase()
+        .trim() || "";
     const result = attemptTurn(
       hand,
       grid,
@@ -294,7 +296,7 @@ export function App() {
         totalTurns={TOTAL_TURNS}
         points={points}
         gameSeed={seed}
-        version="0.3.2"
+        version="0.3.3"
         timerDisplay={displayTime}
         timerWarning={timeRemaining <= 60}
         statusMessage={statusMessage}
