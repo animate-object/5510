@@ -95,6 +95,7 @@ export function App() {
       if (Result.isSuccess(result)) {
         const { grid, handAndBagForEachTurn, wordList, nextGame } =
           result.value;
+        console.log({ grid, handAndBagForEachTurn, wordList, nextGame });
         wordSet.current = new Set(wordList);
         newGame.current = nextGame;
         setGrid(grid);
@@ -196,7 +197,7 @@ export function App() {
         totalTurns={TOTAL_TURNS}
         points={points}
         gameSeed={seed}
-        version="0.0.4"
+        version="0.1.0"
         onNewGame={newGame.current}
         statusMessage={statusMessage}
       />

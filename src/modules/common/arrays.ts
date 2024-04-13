@@ -9,7 +9,7 @@ export function empty<T>(): T[] {
 }
 
 export function chooseOne<T>(array: T[], random: NextRandom = nextRandom): T {
-  return array[random() * array.length];
+  return array[Math.floor(random() * array.length)];
 }
 
 export function shuffle<T>(array: T[]): T[] {

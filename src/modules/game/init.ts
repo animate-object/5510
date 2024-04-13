@@ -57,8 +57,6 @@ export const initialGrid = (
 // I want to use this approach in part because I want to use the word
 // bank as input to the rng seed
 
-// let's define component functions and contracts
-
 const getSeedFromUrl = (): Maybe.Maybe<string> => {
   const url = new URL(window.location.href);
   const maybeSeed = Maybe.fromNullable(url.searchParams.get("seed"));
@@ -88,7 +86,7 @@ const initializeRng = (wordList: string[], nWords: number): void => {
   console.debug(
     "Seed info:\n" +
       `    Today's seed: ${todaysSeed}\n` +
-      `    Seed from URL: ${seedFromUrl}` +
+      `    Seed from URL: ${seedFromUrl}\n` +
       `    Will use ${willUseMsg}       `
   );
 
@@ -107,6 +105,7 @@ export const drawAllHands = (
   let bag = newBag();
 
   for (let i = 0; i < nTurns; i++) {
+    console.log("Drawing hand", i + 1, "of", nTurns);
     const [hand, updatedBag] = drawHand(handSize, bag);
     hands.push({ hand, bag: updatedBag });
     bag = updatedBag;
