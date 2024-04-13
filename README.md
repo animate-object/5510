@@ -2,6 +2,8 @@
 
 Five hands of five letters in ten minutes.
 
+### [Play the Game](https://animate-object.github.io/5510/)
+
 ## Rules
 
 - play one or more words by placing letters from your hand on the board
