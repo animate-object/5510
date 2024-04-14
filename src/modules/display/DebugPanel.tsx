@@ -11,10 +11,6 @@ interface DebugLogEntryProps {
   entry: Loggable;
 }
 
-interface DebugDictEntryProps extends DebugLogEntryProps {
-  entry: LogDict;
-}
-
 export const LogIdx = ({ idx }: { idx: number }): JSX.Element => {
   const padZeros = (zeros: number, num: number): string => {
     return num.toString().padStart(zeros, "0");
@@ -22,6 +18,10 @@ export const LogIdx = ({ idx }: { idx: number }): JSX.Element => {
 
   return <span className="log-idx">#{padZeros(4, idx)}</span>;
 };
+
+interface DebugDictEntryProps extends DebugLogEntryProps {
+  entry: LogDict;
+}
 
 export const DebugDictEntry = ({
   idx,
@@ -37,6 +37,10 @@ export const DebugDictEntry = ({
         </div>
       );
     }
+    if (typeof entry === "boolean") {
+      return <span className="debug-boolean">{entry ? "true" : "false"}</span>;
+    }
+
     return entry;
   };
 

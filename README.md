@@ -44,10 +44,15 @@ Five hands of five letters in ten minutes.
   - visual feedback for incorrect word
 - logo/branding
 - help window
-- leaderboard
-- per IP/device auth (required for leaderboard)
-  - would be nice to simply store IPs hashed w/scores
-  - could also do simple passwordless auth with email and long oauth sessions
+- leaderboard etc
+  - best possible score
+  - average turn analysis
+  - interesting summary information like
+    - "today's most popular plays"
+  - per IP/device auth (required for leaderboard)
+    - would be nice to simply store IPs hashed w/scores
+    - could also do simple passwordless auth with email and long oauth sessions
+- ## game persistence
 - tip jar
 - UX polish
   - color scheme

@@ -1,5 +1,5 @@
 import "./modules/common/rng.ts";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useContext } from "react";
 import "./App.css";
 import { GridView } from "./modules/grid";
 import {
@@ -20,6 +20,8 @@ import classNames from "classnames";
 import { getSeedForDisplay } from "./modules/common/rng.ts";
 import { emojiFor } from "./modules/common/emoji.ts";
 import { DebugPanel } from "./modules/display/DebugPanel.tsx";
+import { FlagContext } from "./modules/common/flags/FlagContext.tsx";
+import { Flags } from "./modules/common/flags/flags.ts";
 
 const TOTAL_TURNS = 5;
 const GRID_SIZE = 6;
@@ -59,7 +61,7 @@ const computeLayoutDetails = (gridSize: number): LayoutDetails => {
   const isPortrait = height > width;
 
   const cellSize = isPortrait
-    ? (width * 0.98) / gridSize
+    ? (width * 0.96) / gridSize
     : (height * 0.8) / gridSizeAccountingForHand;
 
   return {
@@ -112,18 +114,23 @@ export function App() {
   >("initializing");
   const [timeRemaining, setTimeRemaining] = useState<number>(10 * 60);
   const [showDebugPanel, setShowDebugPanel] = useState<boolean>(false);
+  const flagStore = useContext(FlagContext);
   const displayTime = getTimerDisplay(timeRemaining);
 
-  const displayTurn = Math.min(turnIdx + 1, TOTAL_TURNS);
+  const currentTurn = Math.min(turnIdx + 1, TOTAL_TURNS);
   const minutesLeft = Math.floor(timeRemaining / 60);
 
   useEffect(() => {
     initializeGameState().then((result) => {
       if (Result.isSuccess(result)) {
-        const { grid, handAndBagForEachTurn, wordList, nextGame } =
-          result.value;
+        const {
+          grid,
+          handAndBagForEachTurn,
+          wordSet: wordSet_,
+          nextGame,
+        } = result.value;
         log("game.init", describeGameGrid(grid));
-        wordSet.current = new Set(wordList);
+        wordSet.current = wordSet_;
         newGame.current = nextGame;
         setGrid(grid);
         setHandsAndBags(handAndBagForEachTurn);
@@ -237,14 +244,17 @@ export function App() {
       prompt(`Enter a word to place ${displayDirection}`)
         ?.toUpperCase()
         .trim() || "";
-    const result = attemptTurn(
+
+    const result = attemptTurn({
       hand,
       grid,
-      wordSet.current,
+      wordSet: wordSet.current,
       word,
-      cell.coords,
-      direction
-    );
+      start: cell.coords,
+      direction,
+      currentTurn,
+      useNewScoring: flagStore.getFlag(Flags.new_scoring_rules),
+    });
 
     if (word.length === 0) {
       return;
@@ -292,7 +302,7 @@ export function App() {
       <QuickStatsPanel
         mode={isPortrait ? "portrait" : "landscape"}
         handsLeft={handsLeft}
-        currentTurn={displayTurn}
+        currentTurn={currentTurn}
         totalTurns={TOTAL_TURNS}
         points={points}
         gameSeed={seed}
@@ -314,12 +324,10 @@ export function App() {
         )}
       />
       {}
-      <div className="hug-bottom">
-        <div className="hand">
-          {hand?.letters?.map((letter, i) => (
-            <HandTile key={i} letter={letter} cellSize={cellSize} />
-          ))}
-        </div>
+      <div className="hand">
+        {hand?.letters?.map((letter, i) => (
+          <HandTile key={i} letter={letter} cellSize={cellSize} />
+        ))}
       </div>
       {debugMode && (
         <>

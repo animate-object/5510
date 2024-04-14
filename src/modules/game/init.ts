@@ -1,6 +1,6 @@
 /// Utilities for initializing game state
 
-import { Arrays, Maybe, Result } from "../common";
+import { Arrays, Maybe, Result, allPermutations } from "../common";
 import { initGlobalLogger } from "../common/log";
 import {
   buildSeedFromWordList,
@@ -19,20 +19,26 @@ import { fetchWordList } from "./word_list_retrieval";
 
 export const DEFAULT_GRID_SIZE = 6;
 
-const BONUS_TILE_COUNT_BAG = [
+const OLD_BONUS_TILE_COUNT_BAG = [
   2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6, 6, 7,
 ];
+
+const BONUS_TILE_COUNT_BAG = [3, 4, 4, 4, 4, 5, 5, 5, 6, 6, 7];
 
 export const initialGrid = (
   width: number = DEFAULT_GRID_SIZE,
   height: number = DEFAULT_GRID_SIZE,
-  bonusTileCount: number = Arrays.chooseOne(BONUS_TILE_COUNT_BAG)
+  bonusTileCount: number = Arrays.chooseOne(
+    getFlag("more_bonus_tiles")
+      ? BONUS_TILE_COUNT_BAG
+      : OLD_BONUS_TILE_COUNT_BAG
+  )
 ): Grid<TileData> => {
   let grid = newGrid(width, height, emptyTile);
   let bonusTilesLeftToPlace = bonusTileCount;
 
   while (bonusTilesLeftToPlace > 0) {
-    const x = Math.floor(window.nextRandom() * width);
+    const x = Math.floor(nextRandom() * width);
     const y = Math.floor(nextRandom() * height);
 
     if (grid.getCellData({ x, y })?.bonus === undefined) {
@@ -125,7 +131,7 @@ export const drawAllHands = (
 };
 
 interface InitState {
-  wordList: string[];
+  wordSet: Set<string>;
   grid: Grid<TileData>;
   handAndBagForEachTurn: HandAndBag[];
   nextGame: () => void;
@@ -155,6 +161,35 @@ const DEFAULTS: InitArgs = {
   scoreConfig: SCORE_CONFIGS.DEFAULT,
 };
 
+export const allWordsForLetters = (
+  string: string,
+  wordSet: Set<string>
+): Record<number, string[]> => {
+  const words = allPermutations(string).filter((w) => wordSet.has(w));
+
+  return words.reduce<Record<number, string[]>>((acc, word) => {
+    acc[word.length] = [...(acc[word.length] || []), word];
+    return acc;
+  }, {});
+};
+
+export const initDevTools = (wordSet: Set<string>): void => {
+  (window as any).wordSet = wordSet;
+  (window as any).allWordsForLetters = (string: string) =>
+    allWordsForLetters(string, wordSet);
+  (window as any).printWords = (string: string) => {
+    const allWords = allWordsForLetters(string, wordSet);
+    const wordLengths = Object.keys(allWords)
+      .map(Number)
+      .sort((a, b) => a - b);
+    let output = "Valid words of length...\n";
+    for (const length of wordLengths) {
+      output += `\t${length}: ${allWords[length].join(", ")}\n`;
+    }
+    console.info(output);
+  };
+};
+
 export const initializeGameState = async ({
   gridSize,
   nTurns,
@@ -162,7 +197,6 @@ export const initializeGameState = async ({
   newSeedWordCount,
   ...configs
 }: InitArgs = DEFAULTS): Promise<Result.Result<InitState>> => {
-  initGlobalLogger();
   const wordListResult = await fetchWordList();
   if (Result.isFailure(wordListResult)) {
     return wordListResult;
@@ -170,6 +204,7 @@ export const initializeGameState = async ({
 
   const wordList = wordListResult.value;
   initializeRng(wordList, newSeedWordCount);
+
   const grid = initialGrid(gridSize, gridSize);
   const handAndBagForEachTurn = drawAllHands(nTurns, handSize);
 
@@ -184,8 +219,11 @@ export const initializeGameState = async ({
     }, {}),
   });
 
+  const wordSet = new Set(wordList);
+  initDevTools(wordSet);
+
   return Result.success({
-    wordList,
+    wordSet,
     grid,
     handAndBagForEachTurn,
     nextGame: () => {

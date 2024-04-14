@@ -82,21 +82,99 @@ function scoreTurn(wordsPlayed: PlayedWord[]): number {
   }));
 
   log("game.turn", {
-    wordCount: scoredWords.length,
-    words: scoredWords.map((w) => `${describePlayedWord(w.word)} → ${w.score}`),
+    "Word Count": scoredWords.length,
+    Words: scoredWords.map((w) => `${describePlayedWord(w.word)} → ${w.score}`),
   });
 
   return scoredWords.reduce((acc, { score }) => acc + score, 0);
 }
 
-export function attemptTurn(
-  hand: Hand,
-  grid: GameGrid,
-  wordSet: Set<string>,
-  word: string,
-  start: Coords,
-  direction: "e" | "s"
-): Result.Result<TurnResult> {
+const applyWordsPlayedBonus = (wordsPlayed: number): number => {
+  // const multiplier = Math.max(0.5 * wordsPlayed, 1); // 1 for 1 or 2, 1.5 for 3, 2 for 4, 2.5 for 5, etc.
+  // const multiplier = wordsPlayed; // 1 for 1, 2 for 2, 3 for 3, etc.
+  // how will this influence the game though?
+  // it should be rewording to play many words, but should it be more rewarding than playing a single high-scoring word?
+
+  let multiplier: number;
+  if (wordsPlayed === 1) {
+    multiplier = 1;
+  } else if (wordsPlayed === 2) {
+    multiplier = 1.5;
+  } else {
+    multiplier = Math.min(wordsPlayed, 5) - 1; // 2 for 3, 3 for 4, 4 for 5
+  }
+
+  return multiplier;
+};
+
+const applyAllLettersPlayedBonus = (
+  turnScore: number,
+  lettersPlayed: number,
+  handSize: number,
+  currentTurn: number
+): number => {
+  log("game.turn", {
+    "Letters Played": lettersPlayed,
+    "Hand Size": handSize,
+    "Current Turn": currentTurn,
+  });
+  if (lettersPlayed < handSize) {
+    return 0;
+  }
+
+  return 10 * currentTurn;
+};
+
+const scoreTurnNew = (
+  wordsPlayed: PlayedWord[],
+  nLettersPlayed: number,
+  handSize: number,
+  currentTurn: number
+): number => {
+  const baseScore = scoreTurn(wordsPlayed);
+  const allLettersBonus = applyAllLettersPlayedBonus(
+    baseScore,
+    nLettersPlayed,
+    handSize,
+    currentTurn
+  );
+  const nWordsBonus = applyWordsPlayedBonus(wordsPlayed.length);
+
+  const withTurnBonuses = Math.floor(
+    (baseScore + allLettersBonus) * nWordsBonus
+  );
+
+  log("game.turn", {
+    "All Letters Bonus": allLettersBonus > 0 ? allLettersBonus : "No bonus",
+    "Word Count Bonus": nWordsBonus > 1 ? `${nWordsBonus}x` : "No bonus",
+    "Base Turn Score": baseScore,
+    "Total turn score": withTurnBonuses,
+  });
+
+  return withTurnBonuses;
+};
+
+interface AttemptTurnArgs {
+  hand: Hand;
+  grid: GameGrid;
+  wordSet: Set<string>;
+  word: string;
+  start: Coords;
+  direction: "e" | "s";
+  currentTurn: number;
+  useNewScoring?: boolean;
+}
+
+export function attemptTurn({
+  hand,
+  grid,
+  wordSet,
+  word,
+  start,
+  direction,
+  currentTurn,
+  useNewScoring,
+}: AttemptTurnArgs): Result.Result<TurnResult> {
   if (word == null || word === "") {
     return Result.failure("No word entered");
   }
@@ -126,12 +204,23 @@ export function attemptTurn(
   if (turnResult.kind === "invalid") {
     return Result.failure(turnResult.message);
   } else {
-    const score = scoreTurn(turnResult.summary.wordsPlayed);
+    const {
+      summary: { wordsPlayed, lettersPlayed },
+    } = turnResult;
+
+    const score = useNewScoring
+      ? scoreTurnNew(
+          wordsPlayed,
+          lettersPlayed.length,
+          hand.letters.length,
+          currentTurn
+        )
+      : scoreTurn(wordsPlayed);
 
     return Result.success({
       gameGrid: newGrid,
       pointsScored: score,
-      wordsPlayed: turnResult.summary.wordsPlayed.length,
+      wordsPlayed: wordsPlayed.length,
     });
   }
 }
