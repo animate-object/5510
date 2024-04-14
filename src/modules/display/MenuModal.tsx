@@ -1,7 +1,7 @@
 import React from "react";
 import { Modal } from "./Modal";
 import { BonusTile } from "./Tile";
-import { Bonus, GameCell, GameCellAndCoords, bonusAbbreviation } from "../game";
+import { Bonus, GameCellAndCoords } from "../game";
 
 type MenuContentType = "menu" | "rules";
 
