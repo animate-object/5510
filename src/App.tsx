@@ -22,6 +22,7 @@ import { emojiFor } from "./modules/common/emoji.ts";
 import { DebugPanel } from "./modules/display/DebugPanel.tsx";
 import { FlagContext } from "./modules/common/flags/FlagContext.tsx";
 import { Flags } from "./modules/common/flags/flags.ts";
+import { MenuModal } from "./modules/display/MenuModal.tsx";
 
 const TOTAL_TURNS = 5;
 const GRID_SIZE = 6;
@@ -113,9 +114,12 @@ export function App() {
     | "done.outOfTime"
   >("initializing");
   const [timeRemaining, setTimeRemaining] = useState<number>(10 * 60);
-  const [showDebugPanel, setShowDebugPanel] = useState<boolean>(false);
+
+  type Modals = "debug" | "menu";
+  const [activeModal, setActiveModal] = useState<Modals | undefined>();
   const flagStore = useContext(FlagContext);
   const displayTime = getTimerDisplay(timeRemaining);
+  const useNewScoring = flagStore.getFlag(Flags.new_scoring_rules);
 
   const currentTurn = Math.min(turnIdx + 1, TOTAL_TURNS);
   const minutesLeft = Math.floor(timeRemaining / 60);
@@ -253,7 +257,7 @@ export function App() {
       start: cell.coords,
       direction,
       currentTurn,
-      useNewScoring: flagStore.getFlag(Flags.new_scoring_rules),
+      useNewScoring,
     });
 
     if (word.length === 0) {
@@ -311,6 +315,7 @@ export function App() {
         timerWarning={timeRemaining <= 60}
         statusMessage={statusMessage}
         onNewGame={newGame.current}
+        onOpenMenu={useNewScoring ? () => setActiveModal("menu") : undefined}
       />
       <GridView
         grid={grid!}
@@ -331,16 +336,29 @@ export function App() {
       </div>
       {debugMode && (
         <>
-          <DebugPanel open={showDebugPanel} />
+          <DebugPanel
+            open={activeModal === "debug"}
+            onClose={() => setActiveModal(undefined)}
+          />
           <div className="debug-panel-toggle">
             <button
-              onClick={() => setShowDebugPanel(!showDebugPanel)}
+              onClick={() =>
+                activeModal === "debug"
+                  ? setActiveModal(undefined)
+                  : setActiveModal("debug")
+              }
               className="debug-panel-bottom"
             >
               Q
             </button>
           </div>
         </>
+      )}
+      {useNewScoring && (
+        <MenuModal
+          isOpen={activeModal === "menu"}
+          onClose={() => setActiveModal(undefined)}
+        />
       )}
     </div>
   );

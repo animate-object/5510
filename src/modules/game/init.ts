@@ -1,7 +1,6 @@
 /// Utilities for initializing game state
 
 import { Arrays, Maybe, Result, allPermutations } from "../common";
-import { initGlobalLogger } from "../common/log";
 import {
   buildSeedFromWordList,
   newGameFromSeed,

@@ -108,7 +108,6 @@ const applyWordsPlayedBonus = (wordsPlayed: number): number => {
 };
 
 const applyAllLettersPlayedBonus = (
-  turnScore: number,
   lettersPlayed: number,
   handSize: number,
   currentTurn: number
@@ -133,7 +132,6 @@ const scoreTurnNew = (
 ): number => {
   const baseScore = scoreTurn(wordsPlayed);
   const allLettersBonus = applyAllLettersPlayedBonus(
-    baseScore,
     nLettersPlayed,
     handSize,
     currentTurn

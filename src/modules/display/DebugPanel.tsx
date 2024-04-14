@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import "./DebugPanel.css";
 import classNames from "classnames";
+import { Modal } from "./Modal";
 
 interface Props {
   open: boolean;
+  onClose: () => void;
 }
 
 interface DebugLogEntryProps {
@@ -39,6 +41,12 @@ export const DebugDictEntry = ({
     }
     if (typeof entry === "boolean") {
       return <span className="debug-boolean">{entry ? "true" : "false"}</span>;
+    }
+    if (typeof entry === "number") {
+      return <span className="debug-number">{entry}</span>;
+    }
+    if (typeof entry === "string") {
+      return <span className="debug-string">{entry}</span>;
     }
 
     return entry;
@@ -113,7 +121,7 @@ export const DebugData = ({ data }: DebugDataProps): JSX.Element => {
   );
 };
 
-export function DebugPanel({ open }: Props): JSX.Element {
+export function DebugPanel({ open, onClose }: Props): JSX.Element {
   const [data, setData] = useState<LogData>({} as LogData);
   const [selectedTab, setSelectedTab] = useState<GlobalLogCat>("game.stat");
 
@@ -132,21 +140,27 @@ export function DebugPanel({ open }: Props): JSX.Element {
   };
 
   return (
-    <div className="debug-panel">
-      <div className="panel-title">Debug Panel</div>
-      <div className="panel-tabs">
-        {getTabs(data).map((cat) => (
-          <button
-            key={cat}
-            className={classNames({ active: selectedTab === cat })}
-            onClick={() => setSelectedTab(cat as GlobalLogCat)}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
+    <Modal
+      isOpen={open}
+      onClose={onClose}
+      title="Debug Panel"
+      style={{ transparent: true }}
+    >
+      <div className="panel-content">
+        <div className="panel-tabs">
+          {getTabs(data).map((cat) => (
+            <button
+              key={cat}
+              className={classNames({ active: selectedTab === cat })}
+              onClick={() => setSelectedTab(cat as GlobalLogCat)}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
 
-      {selectedTab && <DebugData data={data[selectedTab]} />}
-    </div>
+        {selectedTab && <DebugData data={data[selectedTab]} />}
+      </div>
+    </Modal>
   );
 }

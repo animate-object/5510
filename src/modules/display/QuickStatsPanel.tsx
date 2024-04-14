@@ -44,8 +44,9 @@ interface QuickStatsProps {
   version: string;
   timerDisplay: string;
   timerWarning: boolean;
-  onNewGame: () => void;
   statusMessage: StatusMessage;
+  onNewGame: () => void;
+  onOpenMenu?: () => void;
 }
 
 export function QuickStatsPanel({
@@ -60,6 +61,7 @@ export function QuickStatsPanel({
   timerWarning,
   timerDisplay,
   onNewGame,
+  onOpenMenu,
 }: QuickStatsProps) {
   const copyGameSeedUrl = () => {
     const url = new URL(window.location.href);
@@ -78,6 +80,11 @@ export function QuickStatsPanel({
       <PanelItem key="new-game" onClick={() => onNewGame()}>
         New Game
       </PanelItem>,
+      !!onOpenMenu ? (
+        <PanelItem key="menu" onClick={() => onOpenMenu()}>
+          ?
+        </PanelItem>
+      ) : undefined,
     ],
     stats: [
       <PanelItem key="score">Score: {points}</PanelItem>,
