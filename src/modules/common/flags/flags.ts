@@ -19,8 +19,8 @@ function afterLocalDate(y: number, m: number, d: number): FlagRule {
 }
 
 const Rules: Record<Flags, FlagRule> = {
-  [Flags.more_bonus_tiles]: afterLocalDate(2024, 4, 15),
-  [Flags.new_scoring_rules]: afterLocalDate(2024, 4, 15),
+  [Flags.more_bonus_tiles]: afterLocalDate(2024, 4, 16),
+  [Flags.new_scoring_rules]: afterLocalDate(2024, 4, 16),
 };
 
 function flagStateFromQuery(query: URLSearchParams): PartialFlags {
