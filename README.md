@@ -19,12 +19,19 @@ Five hands of five letters in ten minutes.
 
 ## Dev Log
 
+### Priotized List
+
+1. tile placement UX - tap & keyboard controls
+2. menu
+3. game persistence
+4. leaderboard
+5. animations/UX polish
+6. logo/branding
+7. "share" overhaul
+8. tip jar
+
 ### ToDo
 
-- more bonuses
-  - bonus for paying all your tiles. since it is harder to place all your tiles as the game goes on, the bonus value should increase. I am imagining a flat bonus, perhaps +10, +20, +30, +40, +50
-  - bonus multipleir for each word played. Need to think on this but it could be as simple as:
-    - after all other bonuses, your turn score is multiplied by the number of words played (e.g. 2x for 2 words, 3x for 3 words)
 - tile placement UX
   - considering several models:
     - tap based model: tap a tile or letter to enter placement mode.
@@ -43,7 +50,6 @@ Five hands of five letters in ten minutes.
     - perhaps there could be animations or other visual indicators to show the scoring formula being applied?
   - visual feedback for incorrect word
 - logo/branding
-- help window
 - leaderboard etc
   - best possible score
   - average turn analysis
@@ -52,7 +58,7 @@ Five hands of five letters in ten minutes.
   - per IP/device auth (required for leaderboard)
     - would be nice to simply store IPs hashed w/scores
     - could also do simple passwordless auth with email and long oauth sessions
-- ## game persistence
+- game persistence
 - tip jar
 - UX polish
   - color scheme
@@ -60,3 +66,14 @@ Five hands of five letters in ten minutes.
   - custom iconography?
 - tech debt
   - single source of truth for mobile breakpoints
+- menu
+  - today's game menu option
+
+### Done
+
+- help window
+
+- more bonuses
+  - bonus for paying all your tiles. since it is harder to place all your tiles as the game goes on, the bonus value should increase. I am imagining a flat bonus, perhaps +10, +20, +30, +40, +50
+  - bonus multipleir for each word played. Need to think on this but it could be as simple as:
+    - after all other bonuses, your turn score is multiplied by the number of words played (e.g. 2x for 2 words, 3x for 3 words)
