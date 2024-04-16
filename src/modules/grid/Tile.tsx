@@ -226,6 +226,7 @@ export const ButtonTile = ({
       onMouseUp={handlePressEnd}
       onTouchStart={handlePressStart}
       onTouchEnd={handlePressEnd}
+      onClick={!holdDurationS ? onClick : undefined}
       {...rest}
     />
   );

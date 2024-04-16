@@ -16,10 +16,10 @@ interface Props {
 }
 
 const coordsToString = (coords: Coords) => `${coords.x},${coords.y}`;
-const coordsFromString = (str: string) => {
-  const [x, y] = str.split(",").map(Number);
-  return { x, y };
-};
+// const coordsFromString = (str: string) => {
+//   const [x, y] = str.split(",").map(Number);
+//   return { x, y };
+// };
 
 const toIds = (coords: Coords[]) => {
   const ids = coords.map(coordsToString);
@@ -88,6 +88,9 @@ const getPlayDetails = (
       candidateWords.push([...nextCandidate]);
       nextCandidate = [];
     }
+  }
+  if (nextCandidate.length > 0) {
+    candidateWords.push([...nextCandidate]);
   }
 
   // find the word, if any, that contains the anchor tile
@@ -192,6 +195,14 @@ export function Board({
     setLettersInPlay([...lettersInPlay, { letter, coords }]);
   };
 
+  const removeLastLetterInPlay = () => {
+    const newLettersInPlay = lettersInPlay.slice(0, -1);
+    setLettersInPlay(newLettersInPlay);
+    if (newLettersInPlay.length === 0) {
+      abortPlacement();
+    }
+  };
+
   const rowContaining = (coords: Coords): Coords[] => {
     const start = { x: 0, y: coords.y };
     const cells = grid.walk(start, "e");
@@ -246,7 +257,7 @@ export function Board({
   };
 
   const placeFirstLetter = (letter: Letter, coords: Coords) => {
-    onSetStatus({ variant: "info", message: "Placing" });
+    onSetStatus({ variant: "info", message: "Placing tiles" });
     stageLetterInPlay(letter, coords);
     setMode("placing.more");
   };
@@ -359,6 +370,12 @@ export function Board({
                   setMode("inactive");
                 }
               }}
+              onHoldTick={(remainingS) => {
+                onSetStatus({
+                  variant: "success",
+                  message: `Committing...`,
+                });
+              }}
               holdDurationS={1}
             />
           </>
@@ -366,28 +383,11 @@ export function Board({
         {mode.startsWith("placing") && (
           <ButtonTile
             variant="secondary"
-            content={"␘"}
+            content={"␡"}
             cellSize={cellSize}
-            onClickAndHold={() => {
-              abortPlacement();
-              onSetStatus({
-                variant: "info",
-                message: "Hmm, 🤔",
-              });
+            onClick={() => {
+              removeLastLetterInPlay();
             }}
-            holdDurationS={1}
-            onHoldTick={(_remainingS) =>
-              onSetStatus({
-                variant: "info",
-                message: "Cancelling...",
-              })
-            }
-            onHoldCancel={() =>
-              onSetStatus({
-                variant: "info",
-                message: "Placing",
-              })
-            }
           />
         )}
       </div>
