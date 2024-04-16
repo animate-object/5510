@@ -88,12 +88,19 @@ export const ClickableTile = ({
 interface HandTileProps {
   cellSize: number;
   letter: Letter;
+  focused?: boolean;
   onClick: (letter: Letter) => void;
 }
 
-export const HandTile = ({ letter, cellSize, onClick }: HandTileProps) => {
+export const HandTile = ({
+  letter,
+  cellSize,
+  focused,
+  onClick,
+}: HandTileProps) => {
   return (
     <BaseTile
+      focused={focused}
       onClick={() => onClick?.(letter)}
       content={letter}
       topRightContent={baseScore(letter).toString()}

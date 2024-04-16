@@ -128,6 +128,9 @@ export function Board({
   const [mode, setMode] = useState<BoardMode>("inactive");
   const [lettersInPlay, setLettersInPlay] = useState<LetterInPlay[]>([]);
   const [focusedTile, setFocusedTile] = useState<Coords | null>(null);
+  const [selectedHandTileIdx, setSelectedHandTileIdx] = useState<number | null>(
+    null
+  );
   const displayHand = hideLettersInPlayFromHand(hand, lettersInPlay);
   const anyHighlighted = hilighted.length > 0;
 
@@ -141,7 +144,7 @@ export function Board({
   // after that we need placeholders, up to 4 total
   const placeholderTileCount = Math.max(0, lettersInPlay.length - 1);
   const placeholderTileIds = Array.from({ length: placeholderTileCount }).map(
-    (i) => `placeholder-${i}`
+    (_t, i) => `placeholder-${i}`
   );
 
   // const addToHighlighted = (coords: Coords[]) => {
@@ -179,6 +182,10 @@ export function Board({
     setHighlighted([]);
   };
 
+  const clearSelectedHandTileIdx = () => {
+    setSelectedHandTileIdx(null);
+  };
+
   const stageLetterInPlay = (letter: Letter, coords: Coords) => {
     // if the cell is empty
     const cell = grid.getCell(coords);
@@ -193,13 +200,18 @@ export function Board({
       return;
     }
     setLettersInPlay([...lettersInPlay, { letter, coords }]);
+    clearSelectedHandTileIdx();
+    clearFocusedTile();
   };
 
   const removeLastLetterInPlay = () => {
+    const lastLetter = lettersInPlay[lettersInPlay.length - 1];
     const newLettersInPlay = lettersInPlay.slice(0, -1);
     setLettersInPlay(newLettersInPlay);
     if (newLettersInPlay.length === 0) {
       abortPlacement();
+    } else {
+      setFocusedTile(lastLetter.coords);
     }
   };
 
@@ -235,12 +247,20 @@ export function Board({
     switch (mode) {
       case "inactive":
         startPlacement(cell);
+        if (selectedHandTileIdx != null) {
+          console.log("placing first letter");
+          placeFirstLetter(displayHand[selectedHandTileIdx], cell.coords);
+        }
         break;
       case "placing.first":
-        abortPlacement();
+        startPlacement(cell);
         break;
       case "placing.more":
-        focusTile(cell.coords);
+        if (selectedHandTileIdx != null) {
+          placeMoreLetters(displayHand[selectedHandTileIdx], cell.coords);
+        } else {
+          focusTile(cell.coords);
+        }
         break;
     }
   };
@@ -263,15 +283,24 @@ export function Board({
   };
 
   const handleTapHandTile = useCallback(
-    (letter: Letter) => {
+    (letter: Letter, idx: number) => {
       switch (mode) {
         case "inactive":
+          setSelectedHandTileIdx(idx);
           return;
         case "placing.first":
-          placeFirstLetter(letter, focusedTile!);
+          if (focusedTile) {
+            placeFirstLetter(letter, focusedTile!);
+          } else {
+            setSelectedHandTileIdx(idx);
+          }
           return;
         case "placing.more":
-          placeMoreLetters(letter, focusedTile!);
+          if (focusedTile) {
+            placeMoreLetters(letter, focusedTile);
+          } else {
+            setSelectedHandTileIdx(idx);
+          }
           return;
       }
     },
@@ -318,9 +347,10 @@ export function Board({
         {displayHand?.map((letter, i) => (
           <HandTile
             key={i}
-            onClick={handleTapHandTile}
+            onClick={(l) => handleTapHandTile(l, i)}
             letter={letter}
             cellSize={cellSize}
+            focused={selectedHandTileIdx === i}
           />
         ))}
         {mode === "inactive" && (
@@ -331,7 +361,7 @@ export function Board({
             onHoldCancel={() =>
               onSetStatus({
                 variant: "info",
-                message: "Once more into the frey!",
+                message: "Once more into the fray!",
               })
             }
             onClickAndHold={() => {
@@ -370,10 +400,16 @@ export function Board({
                   setMode("inactive");
                 }
               }}
-              onHoldTick={(remainingS) => {
+              onHoldTick={(_remainingS) => {
                 onSetStatus({
                   variant: "success",
-                  message: `Committing...`,
+                  message: "Hold to play",
+                });
+              }}
+              onHoldCancel={() => {
+                onSetStatus({
+                  variant: "info",
+                  message: "Think it over 👍",
                 });
               }}
               holdDurationS={1}
