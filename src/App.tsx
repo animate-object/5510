@@ -316,7 +316,7 @@ export function App() {
         totalTurns={TOTAL_TURNS}
         points={points}
         gameSeed={seed}
-        version="0.3.8"
+        version="0.3.9"
         timerDisplay={displayTime}
         timerWarning={timeRemaining <= 60}
         statusMessage={statusMessage}

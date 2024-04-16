@@ -4,7 +4,7 @@ import { GameCellAndCoords, GameGrid, Letter } from "../game";
 import { GridView } from "./GridView";
 import { ButtonTile, GridTile, HandTile, HandTilePlaceholder } from "./Tile";
 import { Coords } from "./grid";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface Props {
   grid: GameGrid;
@@ -113,8 +113,32 @@ const getPlayDetails = (
   };
 };
 
-type BoardMode = "inactive" | "placing.first" | "placing.more";
+const findNextUnoccupiedTile = (
+  grid: GameGrid,
+  start: Coords,
+  direction: "s" | "e"
+): Maybe.Maybe<GameCellAndCoords> => {
+  let nextUnoccupiedTile: Maybe.Maybe<GameCellAndCoords> = Maybe.nothing();
+  let current = start;
+  while (!nextUnoccupiedTile) {
+    const next = grid.neighbors[direction](current);
+    if (!next) {
+      break;
+    }
+    if (!next.cell.data.letter) {
+      nextUnoccupiedTile = next;
+    }
+    current = next.coords;
+  }
+  return nextUnoccupiedTile;
+};
+
+type BoardMode = "inactive" | "placing.first" | "placing.more" | "typing.more";
+
 type LetterInPlay = { letter: Letter; coords: Coords };
+
+type ArrowKey = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
+type Direction = "n" | "s" | "w" | "e";
 
 export function Board({
   grid,
@@ -131,41 +155,148 @@ export function Board({
   const [selectedHandTileIdx, setSelectedHandTileIdx] = useState<number | null>(
     null
   );
+  const [shiftKeyPressed, setShiftKeyPressed] = useState(false);
+  const [keyboardPlayDirection, setKeyboardPlayDirection] = useState<"s" | "e">(
+    "e"
+  );
   const displayHand = hideLettersInPlayFromHand(hand, lettersInPlay);
   const anyHighlighted = hilighted.length > 0;
-
   // aliasing in case these concepts ever diverge
   const playableTiles = hilighted;
 
-  // there are 6 slots total
-  // five occupied by letters in the hand
-  // one occupied by the pass button
-  // the first played letter is taken up by the commit button
-  // after that we need placeholders, up to 4 total
+  // fill the hand with placeholders as letters are played, accounting
+  // for the pass, cancel, and commit buttons
   const placeholderTileCount = Math.max(0, lettersInPlay.length - 1);
   const placeholderTileIds = Array.from({ length: placeholderTileCount }).map(
     (_t, i) => `placeholder-${i}`
   );
 
-  // const addToHighlighted = (coords: Coords[]) => {
-  //   const selected = fromIds(hilighted);
-  //   setHighlighted(toIds([...selected, ...coords]));
-  // };
+  const handleTypeLetter = (letter: Letter) => {
+    if (!focusedTile) {
+      return;
+    }
+    if (!displayHand.includes(letter)) {
+      console.warn(`Can't play letter not in hand ${letter}`);
+      return;
+    }
+    if (mode === "placing.first") {
+      placeFirstLetter(letter, focusedTile);
+      const direction = shiftKeyPressed ? "s" : "e";
+      setKeyboardPlayDirection(direction);
+      setMode("typing.more");
+      const nextTile = findNextUnoccupiedTile(grid, focusedTile, direction);
+      if (Maybe.isJust(nextTile)) {
+        setFocusedTile(nextTile.coords);
+      }
+    }
+    if (mode === "placing.more") {
+      // no keyboard controls when touch placement is active
+      return;
+    }
+    if (mode === "typing.more") {
+      placeMoreLetters(letter, focusedTile);
+      const nextTile = findNextUnoccupiedTile(
+        grid,
+        focusedTile,
+        keyboardPlayDirection
+      );
+      if (Maybe.isJust(nextTile)) {
+        setFocusedTile(nextTile.coords);
+      }
+    }
+  };
+
+  const handleKeyNavigation = (evt: ArrowKey) => {
+    const direction = {
+      ArrowUp: "n",
+      ArrowDown: "s",
+      ArrowLeft: "w",
+      ArrowRight: "e",
+    }[evt] as Direction;
+
+    const cell = grid.neighbors[direction](focusedTile || { x: 0, y: 0 });
+
+    if (cell && ["placing.first", "inactive"].includes(mode)) {
+      startPlacement(cell);
+    }
+  };
+
+  const handleKeyboardEvents = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key === "Shift") {
+        setShiftKeyPressed(true);
+      }
+      if (
+        ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)
+      ) {
+        handleKeyNavigation(
+          event.key as "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight"
+        );
+      }
+      // if it's a letter key
+      if (event.key.match(/[a-z]/i) && event.key.length === 1) {
+        handleTypeLetter(event.key.toUpperCase() as Letter);
+      }
+      if (event.key === "Enter") {
+        const maybePlay = getPlayDetails(lettersInPlay, grid);
+        if (Maybe.isNothing(maybePlay)) {
+          console.log("invalid play");
+          return;
+        }
+        const { word, start, direction } = maybePlay;
+        if (onCommitPlay(word, start, direction)) {
+          clearFocusedTile();
+          clearHighlighted();
+          clearLettersInPlay();
+          setMode("inactive");
+        }
+      }
+      if (event.key === "Backspace") {
+        removeLastLetterInPlay();
+      }
+      if (event.key === "Escape") {
+        abortPlacement();
+      }
+    },
+    [
+      focusedTile,
+      mode,
+      displayHand,
+      grid,
+      handleTypeLetter,
+      handleKeyNavigation,
+      keyboardPlayDirection,
+      shiftKeyPressed,
+    ]
+  );
+
+  const handleKeyUpEvents = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key === "Shift") {
+        setShiftKeyPressed(false);
+      }
+    },
+    [setShiftKeyPressed]
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyboardEvents);
+    window.addEventListener("keyup", (evt) => handleKeyUpEvents(evt));
+    return () => {
+      window.removeEventListener("keydown", handleKeyboardEvents);
+      window.removeEventListener("keyup", handleKeyUpEvents);
+    };
+  }, [handleKeyboardEvents]);
 
   const replaceHighlighted = (coords: Coords[]) => {
     setHighlighted(toIds(coords));
   };
 
-  // const highlightTiles = (coords: Coords[]) => {
-  //   const ids = coords.map(coordsToString);
-  //   const deduped = [...new Set([...hilighted, ...ids])];
-  //   setHighlighted(deduped);
-  // };
-
   const focusTile = (coords: Coords) => {
-    if (mode === "inactive") {
+    const cellId = coordsToString(coords);
+    if (mode.endsWith("more") && playableTiles.includes(cellId)) {
       setFocusedTile(coords);
-    } else if (playableTiles.includes(coordsToString(coords))) {
+    } else {
       setFocusedTile(coords);
     }
   };
@@ -241,6 +372,7 @@ export function Board({
     clearFocusedTile();
     clearLettersInPlay();
     clearHighlighted();
+    setKeyboardPlayDirection("e");
   };
 
   const handleClickTile = (cell: GameCellAndCoords) => {
@@ -248,7 +380,6 @@ export function Board({
       case "inactive":
         startPlacement(cell);
         if (selectedHandTileIdx != null) {
-          console.log("placing first letter");
           placeFirstLetter(displayHand[selectedHandTileIdx], cell.coords);
         }
         break;
