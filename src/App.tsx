@@ -1,15 +1,13 @@
 import "./modules/common/rng.ts";
 import { useEffect, useRef, useState, useCallback, useContext } from "react";
 import "./App.css";
-import { GridView } from "./modules/grid";
+import { Coords } from "./modules/grid";
 import {
-  GameCellAndCoords,
   GameGrid,
   attemptTurn,
   describeGameGrid,
   initializeGameState,
 } from "./modules/game";
-import { GridTile, HandTile } from "./modules/display";
 import { Maybe, Result } from "./modules/common";
 import { HandAndBag } from "./modules/game/bag.ts";
 import {
@@ -23,6 +21,7 @@ import { DebugPanel } from "./modules/display/DebugPanel.tsx";
 import { FlagContext } from "./modules/common/flags/FlagContext.tsx";
 import { Flags } from "./modules/common/flags/flags.ts";
 import { MenuModal } from "./modules/display/MenuModal.tsx";
+import { Board } from "./modules/grid/Board.tsx";
 
 const TOTAL_TURNS = 5;
 const GRID_SIZE = 6;
@@ -103,7 +102,7 @@ export function App() {
   );
   const { cellSize, isPortrait } = layout;
   const [statusMessage, setStatusMessage] = useState<StatusMessage>({
-    message: "👋 Double tap to play across",
+    message: "Touch experiment. Bugs possible!",
     variant: "info",
   });
   const [gameState, setGameState] = useState<
@@ -142,6 +141,12 @@ export function App() {
       } else {
         alert(result.message);
       }
+    });
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
     });
   }, []);
 
@@ -232,55 +237,56 @@ export function App() {
   const handsLeft = Math.max(handsAndBags.length - turnIdx - 1, 0);
   const turnsTaken = turnIdx;
 
-  const handleClickTile = (cell: GameCellAndCoords, direction: "s" | "e") => {
-    if (grid == null || hand == null) {
-      console.warn("Grid or hand not ready yet");
-      return;
-    }
-
-    if (turnsTaken >= TOTAL_TURNS) {
-      setInfo("😎 Game is over! Try 'New game''");
-      return;
-    }
-
-    const displayDirection = direction === "s" ? "down" : "across";
-    const word =
-      prompt(`Enter a word to place ${displayDirection}`)
-        ?.toUpperCase()
-        .trim() || "";
-
-    const result = attemptTurn({
-      hand,
-      grid,
-      wordSet: wordSet.current,
-      word,
-      start: cell.coords,
-      direction,
-      currentTurn,
-      useNewScoring,
-    });
-
-    if (word.length === 0) {
-      return;
-    }
-
-    if (Result.isFailure(result)) {
-      console.warn(result.message || "Unknown error");
-      if (result.message) {
-        setWarning(result.message);
-      } else {
-        setError("Oops! Something went wrong.");
+  const handleCommitPlay = useCallback(
+    (word: string, start: Coords, direction: "s" | "e") => {
+      if (word.length === 0) {
+        return false;
       }
-      return;
-    }
+      if (grid == null || hand == null) {
+        console.warn("Grid or hand not ready yet");
+        return false;
+      }
 
-    const { pointsScored, gameGrid, wordsPlayed } = result.value;
-    setGrid(gameGrid);
-    setPoints(points + pointsScored);
-    setSuccess(`${wordsPlayed} words played for ${pointsScored} points!`);
+      if (turnsTaken >= TOTAL_TURNS) {
+        setInfo("😎 Game is over! Try 'New game''");
+        return false;
+      }
 
-    nextHand();
-  };
+      const result = attemptTurn({
+        hand,
+        grid,
+        wordSet: wordSet.current,
+        word,
+        start,
+        direction,
+        currentTurn,
+        useNewScoring,
+      });
+
+      if (word.length === 0) {
+        return false;
+      }
+
+      if (Result.isFailure(result)) {
+        console.warn(result.message || "Unknown error");
+        if (result.message) {
+          setWarning(result.message);
+        } else {
+          setError("Oops! Something went wrong.");
+        }
+        return false;
+      }
+
+      const { pointsScored, gameGrid, wordsPlayed } = result.value;
+      setGrid(gameGrid);
+      setPoints(points + pointsScored);
+      setSuccess(`${wordsPlayed} words played for ${pointsScored} points!`);
+
+      nextHand();
+      return true;
+    },
+    [grid, hand, turnIdx, points, handsAndBags, wordSet, useNewScoring]
+  );
 
   const showGame = [
     "playing",
@@ -310,30 +316,21 @@ export function App() {
         totalTurns={TOTAL_TURNS}
         points={points}
         gameSeed={seed}
-        version="0.3.5"
+        version="0.3.6"
         timerDisplay={displayTime}
         timerWarning={timeRemaining <= 60}
         statusMessage={statusMessage}
         onNewGame={newGame.current}
         onOpenMenu={useNewScoring ? () => setActiveModal("menu") : undefined}
       />
-      <GridView
+      <Board
         grid={grid!}
-        cellSizePx={cellSize}
-        renderCell={(cell, coords, cellSizePx) => (
-          <GridTile
-            cell={{ cell, coords }}
-            cellSize={cellSizePx}
-            onClick={handleClickTile}
-          />
-        )}
+        cellSize={cellSize}
+        onCommitPlay={handleCommitPlay}
+        hand={hand?.letters || []}
+        onPass={() => nextHand()}
+        onSetStatus={setStatusMessage}
       />
-      {}
-      <div className="hand">
-        {hand?.letters?.map((letter, i) => (
-          <HandTile key={i} letter={letter} cellSize={cellSize} />
-        ))}
-      </div>
       {debugMode && (
         <>
           <DebugPanel

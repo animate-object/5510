@@ -1,0 +1,114 @@
+.space {
+  text-align: center;
+  vertical-align: middle;
+  border-radius: var(--spacing-2);
+  cursor: pointer;
+  background-color: var(--ivory);
+  user-select: none;
+  transition: border-color 0.25s, opacity 0.1s, background-color 0.5s;
+  border-color: transparent;
+  border-style: solid;
+  opacity: 0.9;
+  position: relative;
+}
+
+.space:hover {
+  border-color: var(--lblue-1);
+  opacity: 1;
+}
+
+.space:active {
+  border-color: var(--lblue-2);
+}
+
+.letter-tile {
+  color: var(--charcoal);
+  transition: background-color 0.5s;
+  opacity: 1;
+}
+
+.double-letter {
+  background: linear-gradient(315deg, var(--pink-1), var(--pink-2));
+  color: white;
+}
+
+.triple-letter {
+  background: linear-gradient(315deg, var(--burg-1), var(--burg-2));
+  color: white;
+}
+
+.double-word {
+  background: linear-gradient(315deg, var(--gold-1), var(--gold-2));
+  color: white;
+}
+
+.triple-word {
+  background: linear-gradient(315deg, var(--dgreen-1), var(--dgreen-2));
+  color: white;
+}
+
+.hand-tile {
+  background-color: var(--ivory-2);
+}
+
+.hand-tile-placeholder {
+  background-color: transparent;
+  border: 1px dashed var(--ivory-2);
+}
+
+.tile-score-container {
+  /* place in top right of tile like superscript */
+  font-size: 1rem;
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  height: 100%;
+  width: 100%;
+  justify-content: flex-end;
+  align-items: flex-start;
+}
+
+.tile-score {
+  line-height: 1;
+  width: 1rem;
+  height: 1rem;
+}
+
+.space.tile-hilite {
+  border: solid;
+  border-color: var(--mblue-1);
+  /* background-color: var(--dblue-1); */
+}
+
+.space.tile-lowlite {
+  opacity: 0.6;
+}
+
+.space.tile-focused {
+  border: solid;
+  border-color: var(--burg-1);
+}
+
+.button-tile {
+  color: white;
+  border: 1px solid white;
+  opacity: 0.8 !important;
+  transition: opacity 0.25s;
+}
+
+.button-tile:focus-within {
+  opacity: 1;
+}
+
+.button-primary {
+  background-color: var(--dgreen-1);
+}
+
+.button-secondary {
+  background-color: var(--dblue-1);
+}
+
+.button-danger {
+  background-color: var(--burg-1);
+}

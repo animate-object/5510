@@ -1,15 +1,18 @@
 import classNames from "classnames";
 import { Bonus, GameCellAndCoords, Letter, baseScore } from "../game";
 import "./Tile.css";
-import { HTMLAttributes, useCallback, useState } from "react";
+import { HTMLAttributes, useState } from "react";
 
-interface Props extends HTMLAttributes<HTMLDivElement> {
-  content?: string;
+interface Props extends Omit<HTMLAttributes<HTMLDivElement>, "content"> {
+  content?: React.ReactNode;
   topRightContent?: string;
   cellSize: number;
   className?: string;
+  hilite?: boolean;
+  lowlite?: boolean;
+  focused?: boolean;
 }
-const BORDER_WIDTH = 1;
+const BORDER_WIDTH = 2;
 
 const computeSizeAndSpacing = (totalSize: number) => {
   const margin = totalSize * 0.03;
@@ -23,6 +26,9 @@ export const BaseTile = ({
   topRightContent,
   className,
   cellSize,
+  lowlite,
+  hilite,
+  focused,
   ...rest
 }: Props) => {
   const { size, margin, fontSizePx, borderWidth } =
@@ -37,7 +43,11 @@ export const BaseTile = ({
         lineHeight: `${size}px`,
         borderWidth: borderWidth,
       }}
-      className={classNames("space", className)}
+      className={classNames("space", className, {
+        "tile-hilite": hilite,
+        "tile-lowlite": lowlite,
+        "tile-focused": focused,
+      })}
       {...rest}
     >
       {topRightContent && (
@@ -52,70 +62,48 @@ export const BaseTile = ({
 
 interface ClickableTileProps extends Omit<Props, "onClick"> {
   cell: GameCellAndCoords;
-  onClick?: (cell: GameCellAndCoords, direction: "s" | "e") => void;
-  interactionTimeout?: number;
+  onClick?: (cell: GameCellAndCoords) => void;
+  className?: string;
 }
 
 export const ClickableTile = ({
   className,
   onClick,
   cell,
-  interactionTimeout = 300,
   ...rest
 }: ClickableTileProps) => {
-  const [lastInteractionTime, setLastInteractionTime] = useState(0);
-  const [interactionTimer, setInteractionTimer] = useState<number | null>(null);
-
-  const handleClick = useCallback(
-    (direction: "s" | "e") => {
-      if (onClick) {
-        onClick(cell, direction);
-      }
-    },
-    [onClick, cell]
-  );
-
-  const handleInteraction = () => {
-    const currentTime = Date.now();
-    const elapsedTime = currentTime - lastInteractionTime;
-
-    // Clear previous timer if it exists
-    if (interactionTimer) {
-      clearTimeout(interactionTimer);
-    }
-
-    if (elapsedTime < interactionTimeout) {
-      // If the interactions are within the timeout, consider it a double interaction
-      handleClick("e");
-      setLastInteractionTime(0); // Reset
-    } else {
-      // Otherwise, start a timer for a potential single interaction
-      const timer = setTimeout(() => {
-        handleClick("s");
-      }, interactionTimeout);
-      setInteractionTimer(timer);
-      setLastInteractionTime(currentTime);
-    }
-  };
-
   return (
-    <BaseTile className={className} onClick={handleInteraction} {...rest} />
+    <BaseTile
+      className={className}
+      onClick={() => {
+        if (onClick) {
+          onClick(cell);
+        }
+      }}
+      {...rest}
+    />
   );
 };
 
 interface HandTileProps {
   cellSize: number;
   letter: Letter;
+  onClick: (letter: Letter) => void;
 }
 
-export const HandTile = ({ letter, cellSize }: HandTileProps) => {
+export const HandTile = ({ letter, cellSize, onClick }: HandTileProps) => {
   return (
     <BaseTile
+      onClick={() => onClick?.(letter)}
       content={letter}
       topRightContent={baseScore(letter).toString()}
       cellSize={cellSize}
     />
   );
+};
+
+export const HandTilePlaceholder = ({ cellSize }: { cellSize: number }) => {
+  return <BaseTile className="hand-tile-placeholder" cellSize={cellSize} />;
 };
 
 interface LetterTileProps extends ClickableTileProps {
@@ -124,11 +112,9 @@ interface LetterTileProps extends ClickableTileProps {
 }
 
 export const LetterTile = ({ letter, bonus, ...rest }: LetterTileProps) => {
-  const classes = ["letter-tile"];
-  if (bonus) {
-    const bonusClass = getBonusTileProps(bonus).className;
-    classes.push(bonusClass);
-  }
+  const bonusClass = !!bonus ? getBonusTileProps(bonus).className : undefined;
+  const classes = ["letter-tile", rest.className, bonusClass];
+
   return (
     <ClickableTile content={letter} className={classNames(classes)} {...rest} />
   );
@@ -154,7 +140,8 @@ interface BonusTileProps extends ClickableTileProps {
 }
 
 export const BonusTile = ({ bonus, ...rest }: BonusTileProps) => {
-  return <ClickableTile {...getBonusTileProps(bonus)} {...rest} />;
+  const { content, className } = getBonusTileProps(bonus);
+  return <ClickableTile className={className} content={content} {...rest} />;
 };
 
 export const GridTile = (props: ClickableTileProps) => {
@@ -176,4 +163,70 @@ export const GridTile = (props: ClickableTileProps) => {
     return <BonusTile bonus={bonus} {...props} />;
   }
   return <ClickableTile {...props} />;
+};
+
+interface ButtonTileProps extends Props {
+  content: React.ReactNode;
+  onClick?: () => void;
+  onDoubleClick?: () => void;
+  onClickAndHold?: () => void;
+  onHoldCancel?: () => void;
+  onHoldTick?: (remaining: number) => void;
+  holdDurationS?: number;
+  variant: "primary" | "secondary" | "danger";
+}
+
+export const ButtonTile = ({
+  onClick,
+  onDoubleClick,
+  onHoldTick,
+  onClickAndHold,
+  onHoldCancel,
+  holdDurationS,
+  variant,
+  ...rest
+}: ButtonTileProps) => {
+  const [timer, setTimer] = useState<number | null>(null);
+
+  const tick = (remainingS: number) => {
+    if (remainingS > 0) {
+      onHoldTick?.(remainingS);
+      setTimer(
+        setTimeout(() => {
+          tick(remainingS - 1);
+        }, 1000)
+      );
+    } else {
+      onClickAndHold?.();
+    }
+  };
+
+  const handlePressStart = () => {
+    if (onClickAndHold && holdDurationS) {
+      tick(holdDurationS);
+    }
+  };
+
+  const handlePressEnd = () => {
+    console.log({
+      msg: "ButtonTile handlePressEnd",
+      timer,
+    });
+    if (timer) {
+      clearTimeout(timer);
+      setTimer(null);
+      onHoldCancel?.();
+    }
+  };
+
+  return (
+    <BaseTile
+      className={`button-tile button-${variant}`}
+      onMouseDown={handlePressStart}
+      onMouseUp={handlePressEnd}
+      onTouchStart={handlePressStart}
+      onTouchEnd={handlePressEnd}
+      {...rest}
+    />
+  );
 };
