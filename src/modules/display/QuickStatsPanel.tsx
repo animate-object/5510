@@ -16,7 +16,7 @@ export const PanelItem = ({
 }: PanelItemProps): JSX.Element => {
   return (
     <div
-      tabIndex={0}
+      // tabIndex={0}
       role={!!onClick ? "status" : "button"}
       className={classNames("quick-stats-panel-item", className, {
         active: !!onClick,

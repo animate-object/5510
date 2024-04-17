@@ -14,13 +14,20 @@ type PartialFlags = Partial<Record<Flags, boolean>>;
 function afterLocalDate(y: number, m: number, d: number): FlagRule {
   return (_data): boolean => {
     const now = new Date();
-    return now > new Date(y, m, d);
+    const then = new Date(y, m - 1, d);
+
+    console.log({
+      now,
+      then,
+      past: now > then,
+    });
+    return now > then;
   };
 }
 
 const Rules: Record<Flags, FlagRule> = {
-  [Flags.more_bonus_tiles]: afterLocalDate(2024, 4, 16),
-  [Flags.new_scoring_rules]: afterLocalDate(2024, 4, 16),
+  [Flags.more_bonus_tiles]: afterLocalDate(2024, 4, 15),
+  [Flags.new_scoring_rules]: afterLocalDate(2024, 4, 15),
 };
 
 function flagStateFromQuery(query: URLSearchParams): PartialFlags {
