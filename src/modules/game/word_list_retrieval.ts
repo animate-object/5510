@@ -24,7 +24,7 @@ async function fetchWordListFromServer(
 }
 
 export async function fetchWordList(
-  listName: string = "default"
+  listName: string = "version-1"
 ): Promise<Result.Result<string[]>> {
   const cachedList: string | null = localStorage.getItem(
     wordlistCacheKey(listName)
