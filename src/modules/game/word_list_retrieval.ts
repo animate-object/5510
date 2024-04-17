@@ -7,7 +7,7 @@ function wordlistCacheKey(listName: string): string {
 }
 
 const DEFAULT_WORD_LIST_URL =
-  "https://raw.githubusercontent.com/animate-object/5510/main/public/wordlist.txt";
+  "https://raw.githubusercontent.com/animate-object/5510/main/public/wordlist-1.txt";
 
 async function fetchWordListFromServer(
   url: string = DEFAULT_WORD_LIST_URL
