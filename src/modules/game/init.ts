@@ -18,20 +18,14 @@ import { fetchWordList } from "./word_list_retrieval";
 
 export const DEFAULT_GRID_SIZE = 6;
 
-const OLD_BONUS_TILE_COUNT_BAG = [
-  2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6, 6, 7,
+const BONUS_TILE_COUNT_BAG = [
+  3, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 7, 7, 8, 9,
 ];
-
-const BONUS_TILE_COUNT_BAG = [3, 4, 4, 4, 4, 5, 5, 5, 6, 6, 7];
 
 export const initialGrid = (
   width: number = DEFAULT_GRID_SIZE,
   height: number = DEFAULT_GRID_SIZE,
-  bonusTileCount: number = Arrays.chooseOne(
-    getFlag("more_bonus_tiles")
-      ? BONUS_TILE_COUNT_BAG
-      : OLD_BONUS_TILE_COUNT_BAG
-  )
+  bonusTileCount: number = Arrays.chooseOne(BONUS_TILE_COUNT_BAG)
 ): Grid<TileData> => {
   let grid = newGrid(width, height, emptyTile);
   let bonusTilesLeftToPlace = bonusTileCount;
@@ -100,7 +94,9 @@ const initializeRng = (wordList: string[], nWords: number): void => {
 
 export const drawAllHands = (
   nTurns: number,
-  handSize: number
+  handSize: number,
+  useCheatDrawForVowels: boolean = false,
+  useCheatDrawForConsonants: boolean = false
 ): HandAndBag[] => {
   const hands = [];
   let bag = newBag();
@@ -113,7 +109,13 @@ export const drawAllHands = (
   });
 
   for (let i = 0; i < nTurns; i++) {
-    const [hand, updatedBag] = drawHand(handSize, bag);
+    const [hand, updatedBag] = drawHand(
+      handSize,
+      bag,
+      undefined,
+      useCheatDrawForVowels,
+      useCheatDrawForConsonants
+    );
     hands.push({ hand, bag: updatedBag });
     bag = updatedBag;
     log("game.hands", `Draw #${i + 1} → ${hand.handId}`);
@@ -149,9 +151,12 @@ interface InitArgs {
 
   scoreConfig: Record<Letter, number>;
   bagConfig: Record<Letter, number>;
+
+  useCheatDrawForVowels?: boolean;
+  useCheatDrawForConsonants?: boolean;
 }
 
-const DEFAULTS: InitArgs = {
+export const INIT_DEFAULTS: InitArgs = {
   gridSize: 6,
   nTurns: 5,
   handSize: 5,
@@ -194,8 +199,10 @@ export const initializeGameState = async ({
   nTurns,
   handSize,
   newSeedWordCount,
+  useCheatDrawForVowels,
+  useCheatDrawForConsonants,
   ...configs
-}: InitArgs = DEFAULTS): Promise<Result.Result<InitState>> => {
+}: InitArgs = INIT_DEFAULTS): Promise<Result.Result<InitState>> => {
   const wordListResult = await fetchWordList();
   if (Result.isFailure(wordListResult)) {
     return wordListResult;
@@ -205,7 +212,12 @@ export const initializeGameState = async ({
   initializeRng(wordList, newSeedWordCount);
 
   const grid = initialGrid(gridSize, gridSize);
-  const handAndBagForEachTurn = drawAllHands(nTurns, handSize);
+  const handAndBagForEachTurn = drawAllHands(
+    nTurns,
+    handSize,
+    useCheatDrawForVowels,
+    useCheatDrawForConsonants
+  );
 
   log("config.scores", configs.scoreConfig);
   log("config.bag", configs.bagConfig);

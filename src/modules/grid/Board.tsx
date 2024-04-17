@@ -10,22 +10,18 @@ interface Props {
   grid: GameGrid;
   cellSize: number;
   hand: Letter[];
+  hideHand: boolean;
   onCommitPlay: (word: string, start: Coords, direction: "s" | "e") => boolean;
   onPass: () => void;
   onSetStatus: (status: StatusMessage) => void;
 }
 
 const coordsToString = (coords: Coords) => `${coords.x},${coords.y}`;
-// const coordsFromString = (str: string) => {
-//   const [x, y] = str.split(",").map(Number);
-//   return { x, y };
-// };
 
 const toIds = (coords: Coords[]) => {
   const ids = coords.map(coordsToString);
   return [...new Set(ids)];
 };
-// const fromIds = (ids: string[]) => ids.map(coordsFromString);
 
 const hideLettersInPlayFromHand = (
   hand: Letter[],
@@ -144,6 +140,7 @@ export function Board({
   grid,
   cellSize,
   hand,
+  hideHand,
   onCommitPlay,
   onPass,
   onSetStatus,
@@ -166,7 +163,13 @@ export function Board({
 
   // fill the hand with placeholders as letters are played, accounting
   // for the pass, cancel, and commit buttons
-  const placeholderTileCount = Math.max(0, lettersInPlay.length - 1);
+
+  const maxButtonTiles = mode === "typing.more" ? 0 : 1;
+
+  const placeholderTileCount = Math.max(
+    0,
+    lettersInPlay.length - maxButtonTiles
+  );
   const placeholderTileIds = Array.from({ length: placeholderTileCount }).map(
     (_t, i) => `placeholder-${i}`
   );
@@ -474,90 +477,92 @@ export function Board({
           );
         }}
       />
-      <div className="hand">
-        {displayHand?.map((letter, i) => (
-          <HandTile
-            key={i}
-            onClick={(l) => handleTapHandTile(l, i)}
-            letter={letter}
-            cellSize={cellSize}
-            focused={selectedHandTileIdx === i}
-          />
-        ))}
-        {mode === "inactive" && (
-          <ButtonTile
-            variant="danger"
-            content={"⏭"}
-            cellSize={cellSize}
-            onHoldCancel={() =>
-              onSetStatus({
-                variant: "info",
-                message: "Once more into the fray!",
-              })
-            }
-            onClickAndHold={() => {
-              onPass();
-              onSetStatus({ variant: "info", message: "Passed turn" });
-            }}
-            holdDurationS={3}
-            onHoldTick={(remainingS) =>
-              onSetStatus({
-                variant: "warning",
-                message: `Passing in ${remainingS}`,
-              })
-            }
-          />
-        )}
-        {mode === "placing.more" && (
-          <>
-            {placeholderTileIds.map((id) => (
-              <HandTilePlaceholder key={id} cellSize={cellSize} />
-            ))}
-            <ButtonTile
-              variant="primary"
-              content={"✔"}
+      {!hideHand && (
+        <div className="hand">
+          {displayHand?.map((letter, i) => (
+            <HandTile
+              key={i}
+              onClick={(l) => handleTapHandTile(l, i)}
+              letter={letter}
               cellSize={cellSize}
-              onClickAndHold={() => {
-                const maybePlay = getPlayDetails(lettersInPlay, grid);
-                if (Maybe.isNothing(maybePlay)) {
-                  console.log("invalid play");
-                  return;
-                }
-                const { word, start, direction } = maybePlay;
-                if (onCommitPlay(word, start, direction)) {
-                  clearFocusedTile();
-                  clearHighlighted();
-                  clearLettersInPlay();
-                  setMode("inactive");
-                }
-              }}
-              onHoldTick={(_remainingS) => {
-                onSetStatus({
-                  variant: "success",
-                  message: "Hold to play",
-                });
-              }}
-              onHoldCancel={() => {
+              focused={selectedHandTileIdx === i}
+            />
+          ))}
+          {mode === "inactive" && (
+            <ButtonTile
+              variant="danger"
+              content={"⏭"}
+              cellSize={cellSize}
+              onHoldCancel={() =>
                 onSetStatus({
                   variant: "info",
-                  message: "Think it over 👍",
-                });
+                  message: "Once more into the fray!",
+                })
+              }
+              onClickAndHold={() => {
+                onPass();
+                onSetStatus({ variant: "info", message: "Passed turn" });
               }}
-              holdDurationS={1}
+              holdDurationS={3}
+              onHoldTick={(remainingS) =>
+                onSetStatus({
+                  variant: "warning",
+                  message: `Passing in ${remainingS}`,
+                })
+              }
             />
-          </>
-        )}
-        {mode.startsWith("placing") && (
-          <ButtonTile
-            variant="secondary"
-            content={"␡"}
-            cellSize={cellSize}
-            onClick={() => {
-              removeLastLetterInPlay();
-            }}
-          />
-        )}
-      </div>
+          )}
+          {mode.endsWith("more") && (
+            <>
+              {placeholderTileIds.map((id) => (
+                <HandTilePlaceholder key={id} cellSize={cellSize} />
+              ))}
+              <ButtonTile
+                variant="primary"
+                content={"✔"}
+                cellSize={cellSize}
+                onClickAndHold={() => {
+                  const maybePlay = getPlayDetails(lettersInPlay, grid);
+                  if (Maybe.isNothing(maybePlay)) {
+                    console.log("invalid play");
+                    return;
+                  }
+                  const { word, start, direction } = maybePlay;
+                  if (onCommitPlay(word, start, direction)) {
+                    clearFocusedTile();
+                    clearHighlighted();
+                    clearLettersInPlay();
+                    setMode("inactive");
+                  }
+                }}
+                onHoldTick={(_remainingS) => {
+                  onSetStatus({
+                    variant: "success",
+                    message: "Hold to play",
+                  });
+                }}
+                onHoldCancel={() => {
+                  onSetStatus({
+                    variant: "info",
+                    message: "Think it over 👍",
+                  });
+                }}
+                holdDurationS={1}
+              />
+            </>
+          )}
+          {mode.startsWith("placing") && (
+            <ButtonTile
+              variant="secondary"
+              content={"␡"}
+              cellSize={cellSize}
+              onClick={() => {
+                removeLastLetterInPlay();
+              }}
+            />
+          )}
+        </div>
+      )}
     </>
   );
 }

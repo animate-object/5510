@@ -1,9 +1,16 @@
 // A simple feature flag system
 
 export enum Flags {
-  more_bonus_tiles = "more_bonus_tiles",
-  new_scoring_rules = "new_scoring_rules",
+  cheat_draw_vowels = "cheat_draw_vowels",
+  cheat_draw_consonants = "cheat_draw_consonants",
+  emoji_share = "emoji_share",
 }
+
+const QueryFlagMapping: Partial<Record<Flags, string>> = {
+  [Flags.cheat_draw_vowels]: "cdv",
+  [Flags.cheat_draw_consonants]: "cdc",
+  [Flags.emoji_share]: "es",
+};
 
 // maybe someday will take additional
 // inputs
@@ -15,25 +22,21 @@ function afterLocalDate(y: number, m: number, d: number): FlagRule {
   return (_data): boolean => {
     const now = new Date();
     const then = new Date(y, m - 1, d);
-
-    console.log({
-      now,
-      then,
-      past: now > then,
-    });
     return now > then;
   };
 }
 
 const Rules: Record<Flags, FlagRule> = {
-  [Flags.more_bonus_tiles]: afterLocalDate(2024, 4, 15),
-  [Flags.new_scoring_rules]: afterLocalDate(2024, 4, 15),
+  [Flags.cheat_draw_vowels]: () => true,
+  [Flags.cheat_draw_consonants]: afterLocalDate(2024, 4, 18),
+  [Flags.emoji_share]: () => false,
 };
 
 function flagStateFromQuery(query: URLSearchParams): PartialFlags {
   const fromQuery = (Object.keys(Flags) as Flags[]).reduce<PartialFlags>(
     (acc, flag) => {
-      acc[flag] = query.has(flag);
+      const altKey = QueryFlagMapping[flag];
+      acc[flag] = query.has(flag) || (!!altKey ? query.has(altKey) : false);
       return acc;
     },
     {}
@@ -68,8 +71,6 @@ export function getFlagState(): Record<Flags, boolean> {
     ...ruleFlags,
     ...queryFlags,
   };
-
-  console.log(finalFlags);
 
   log("config.flags", finalFlags);
 

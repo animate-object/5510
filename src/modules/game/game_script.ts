@@ -160,7 +160,6 @@ interface AttemptTurnArgs {
   start: Coords;
   direction: "e" | "s";
   currentTurn: number;
-  useNewScoring?: boolean;
 }
 
 export function attemptTurn({
@@ -171,7 +170,6 @@ export function attemptTurn({
   start,
   direction,
   currentTurn,
-  useNewScoring,
 }: AttemptTurnArgs): Result.Result<TurnResult> {
   if (word == null || word === "") {
     return Result.failure("No word entered");
@@ -206,14 +204,12 @@ export function attemptTurn({
       summary: { wordsPlayed, lettersPlayed },
     } = turnResult;
 
-    const score = useNewScoring
-      ? scoreTurnNew(
-          wordsPlayed,
-          lettersPlayed.length,
-          hand.letters.length,
-          currentTurn
-        )
-      : scoreTurn(wordsPlayed);
+    const score = scoreTurnNew(
+      wordsPlayed,
+      lettersPlayed.length,
+      hand.letters.length,
+      currentTurn
+    );
 
     return Result.success({
       gameGrid: newGrid,

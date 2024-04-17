@@ -4,6 +4,7 @@ import "./App.css";
 import { Coords } from "./modules/grid";
 import {
   GameGrid,
+  INIT_DEFAULTS,
   attemptTurn,
   describeGameGrid,
   initializeGameState,
@@ -22,6 +23,7 @@ import { FlagContext } from "./modules/common/flags/FlagContext.tsx";
 import { Flags } from "./modules/common/flags/flags.ts";
 import { MenuModal } from "./modules/display/MenuModal.tsx";
 import { Board } from "./modules/grid/Board.tsx";
+import { GameFinishedPanel } from "./modules/display/GameFinishedPanel.tsx";
 
 const TOTAL_TURNS = 5;
 const GRID_SIZE = 6;
@@ -118,13 +120,16 @@ export function App() {
   const [activeModal, setActiveModal] = useState<Modals | undefined>();
   const flagStore = useContext(FlagContext);
   const displayTime = getTimerDisplay(timeRemaining);
-  const useNewScoring = flagStore.getFlag(Flags.new_scoring_rules);
 
   const currentTurn = Math.min(turnIdx + 1, TOTAL_TURNS);
   const minutesLeft = Math.floor(timeRemaining / 60);
 
   useEffect(() => {
-    initializeGameState().then((result) => {
+    initializeGameState({
+      ...INIT_DEFAULTS,
+      useCheatDrawForVowels: flagStore.getFlag(Flags.cheat_draw_vowels),
+      useCheatDrawForConsonants: flagStore.getFlag(Flags.cheat_draw_consonants),
+    }).then((result) => {
       if (Result.isSuccess(result)) {
         const {
           grid,
@@ -260,7 +265,6 @@ export function App() {
         start,
         direction,
         currentTurn,
-        useNewScoring,
       });
 
       if (word.length === 0) {
@@ -285,7 +289,7 @@ export function App() {
       nextHand();
       return true;
     },
-    [grid, hand, turnIdx, points, handsAndBags, wordSet, useNewScoring]
+    [grid, hand, turnIdx, points, handsAndBags, wordSet]
   );
 
   const showGame = [
@@ -321,15 +325,16 @@ export function App() {
         timerWarning={timeRemaining <= 60}
         statusMessage={statusMessage}
         onNewGame={newGame.current}
-        onOpenMenu={useNewScoring ? () => setActiveModal("menu") : undefined}
+        onOpenMenu={() => setActiveModal("menu")}
       />
       <Board
         grid={grid!}
         cellSize={cellSize}
-        onCommitPlay={handleCommitPlay}
         hand={hand?.letters || []}
+        hideHand={gameState !== "playing"}
         onPass={() => nextHand()}
         onSetStatus={setStatusMessage}
+        onCommitPlay={handleCommitPlay}
       />
       {debugMode && (
         <>
@@ -351,12 +356,19 @@ export function App() {
           </div>
         </>
       )}
-      {useNewScoring && (
-        <MenuModal
-          isOpen={activeModal === "menu"}
-          onClose={() => setActiveModal(undefined)}
+      {gameState.startsWith("done") && (
+        <GameFinishedPanel
+          score={points}
+          boardLink={window.location.href}
+          grid={grid!}
+          onSetStatus={setStatusMessage}
+          onNewGame={newGame.current}
         />
       )}
+      <MenuModal
+        isOpen={activeModal === "menu"}
+        onClose={() => setActiveModal(undefined)}
+      />
     </div>
   );
 }

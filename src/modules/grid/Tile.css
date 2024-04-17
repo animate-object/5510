@@ -10,6 +10,7 @@
   border-style: solid;
   opacity: 0.9;
   position: relative;
+  box-shadow: 1px 1px 1px black;
 }
 
 .space:hover {
