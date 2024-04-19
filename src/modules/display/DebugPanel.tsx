@@ -182,6 +182,8 @@ export const SpellableWordTool = () => {
             </div>
           );
         })}
+        {/* lazy hack to fix scroll cut off */}
+        <div style={{ height: 40 }} />
       </div>
     </div>
   );

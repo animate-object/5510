@@ -98,4 +98,5 @@
   margin-top: var(--spacing-2);
   overflow-y: scroll;
   max-height: 50vh;
+  margin-bottom: var(--spacing-4);
 }

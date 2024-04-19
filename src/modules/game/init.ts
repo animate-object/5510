@@ -170,8 +170,9 @@ export const allWordsForLetters = (
   wordSet: Set<string>
 ): Record<number, string[]> => {
   const words = allPermutations(string).filter((w) => wordSet.has(w));
+  const deduped = [...new Set(words)];
 
-  return words.reduce<Record<number, string[]>>((acc, word) => {
+  return deduped.reduce<Record<number, string[]>>((acc, word) => {
     acc[word.length] = [...(acc[word.length] || []), word];
     return acc;
   }, {});
