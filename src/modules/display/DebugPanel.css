@@ -84,3 +84,18 @@
   top: 2px;
   right: 2px;
 }
+
+.word-tool {
+  height: 100%;
+}
+
+.word-tool > input[type="text"] {
+  font-size: 1.25rem;
+  position: relative;
+}
+
+.word-tool-words {
+  margin-top: var(--spacing-2);
+  overflow-y: scroll;
+  max-height: 50vh;
+}

@@ -11,6 +11,15 @@
 
   /* big box shadow */
   box-shadow: 1px 1px 3px black;
+  cursor: pointer;
+}
+
+.button:hover {
+  outline: 1px solid var(--lblue-2);
+}
+
+.button:focus-within {
+  background-color: white;
 }
 
 .play-again-button {
@@ -19,8 +28,11 @@
   background: var(--ivory);
 }
 
+.play-again-button:hover {
+  outline: 1px solid var(--dgreen-1);
+}
+
 .share-button {
   color: var(--lblue-2);
-  /* border-color: var(--mblue-1); */
   background: var(--ivory);
 }

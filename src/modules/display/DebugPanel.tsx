@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import "./DebugPanel.css";
 import classNames from "classnames";
 import { Modal } from "./Modal";
+import { Storage } from "../common";
 
 interface Props {
   open: boolean;
@@ -121,9 +122,85 @@ export const DebugData = ({ data }: DebugDataProps): JSX.Element => {
   );
 };
 
+type MoreTabs = "tool.words";
+
+type DebugPanelTabs = GlobalLogCat | MoreTabs;
+
+export const isLogTab = (tab?: string): tab is GlobalLogCat => {
+  if (!tab) {
+    return false;
+  }
+  return [
+    "game.stat",
+    "game.hands",
+    "game.seed",
+    "game.init",
+    "game.turn",
+    "game.stat",
+    "config.wordList",
+    "config.scores",
+    "config.bag",
+    "config.flags",
+    "rng",
+  ].includes(tab);
+};
+
+export const SpellableWordTool = () => {
+  const [letters, setLetters] = useState<string>("");
+  const [words, setWords] = useState<Record<number, string[]>>({});
+  const handleType = (word: string) => {
+    if (word.length > 6) {
+      return;
+    } else {
+      setLetters(word);
+      const words = (window as any).allWordsForLetters(
+        word.toLocaleLowerCase()
+      );
+      setWords(words);
+    }
+  };
+
+  return (
+    <div className="word-tool">
+      <h2>What can I spell with...</h2>
+      <input
+        value={letters}
+        onChange={(e) => handleType(e.target.value)}
+        type="text"
+      />
+      <div className="word-tool-words">
+        {Object.keys(words).map((len_) => {
+          const len = parseInt(len_, 10);
+          return (
+            <div key={len}>
+              <b>{len} letter words</b>
+              <ul>
+                {words[len].map((w, i) => (
+                  <li key={i}>{w}</li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const MORE_TABS: Record<MoreTabs, React.ReactNode> = {
+  "tool.words": <SpellableWordTool />,
+};
+
+const isMoreTab = (tab: string): tab is MoreTabs => {
+  return tab in MORE_TABS;
+};
+
 export function DebugPanel({ open, onClose }: Props): JSX.Element {
   const [data, setData] = useState<LogData>({} as LogData);
-  const [selectedTab, setSelectedTab] = useState<GlobalLogCat>("game.stat");
+  // const [selectedTab, setSelectedTab] = UseS<GlobalLogCat>("game.stat");
+
+  const { setValue: setSelectedTab, value: selectedTab } =
+    Storage.useStorage<DebugPanelTabs>("debug-panel.tab", "game.stat");
 
   useEffect(() => {
     setData(getLog());
@@ -133,10 +210,11 @@ export function DebugPanel({ open, onClose }: Props): JSX.Element {
     return <></>;
   }
 
-  const getTabs = (data: LogData): GlobalLogCat[] => {
+  const getTabs = (data: LogData): DebugPanelTabs[] => {
     let tabKeys = Object.keys(data) as GlobalLogCat[];
-    tabKeys.sort();
-    return tabKeys;
+    const allKeys = [...tabKeys, ...(Object.keys(MORE_TABS) as MoreTabs[])];
+    allKeys.sort();
+    return allKeys;
   };
 
   return (
@@ -152,14 +230,15 @@ export function DebugPanel({ open, onClose }: Props): JSX.Element {
             <button
               key={cat}
               className={classNames({ active: selectedTab === cat })}
-              onClick={() => setSelectedTab(cat as GlobalLogCat)}
+              onClick={() => setSelectedTab(cat)}
             >
               {cat}
             </button>
           ))}
         </div>
 
-        {selectedTab && <DebugData data={data[selectedTab]} />}
+        {isLogTab(selectedTab) && <DebugData data={data[selectedTab]} />}
+        {isMoreTab(selectedTab) && MORE_TABS[selectedTab]}
       </div>
     </Modal>
   );

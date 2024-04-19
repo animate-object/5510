@@ -1,14 +1,25 @@
 /// permutations of length N from word
 export const permutations = (letters: string, n: number): string[] => {
+  // base cases
+
+  // impossible to permute more letters than we have
   if (n > letters.length) {
     return [];
   }
+
+  // if we are only picking one letter,
+  // return the letters as an array
   if (n === 1) {
-    return [...letters];
+    return letters.split("");
   }
-  if (letters.length === 1 && n === 1) {
+
+  // if there is only one letter left
+  // return it as an array
+  // note this implies n === 1 from condition above
+  if (letters.length === 1) {
     return [letters];
   }
+
   let result: string[] = [];
 
   for (let i = 0; i < letters.length; i++) {
