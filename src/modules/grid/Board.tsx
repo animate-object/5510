@@ -400,6 +400,10 @@ export function Board({
   };
 
   const placeMoreLetters = (letter: Letter, coords: Coords) => {
+    const coordsId = coordsToString(coords);
+    if (!playableTiles.includes(coordsId)) {
+      return;
+    }
     stageLetterInPlay(letter, coords);
     if (getPlayDirection([lettersInPlay[0].coords, coords]) === "s") {
       const column = columnContaining(coords);

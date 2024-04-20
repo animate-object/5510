@@ -24,6 +24,7 @@ import { Flags } from "./modules/common/flags/flags.ts";
 import { MenuModal } from "./modules/display/MenuModal.tsx";
 import { Board } from "./modules/grid/Board.tsx";
 import { GameFinishedPanel } from "./modules/display/GameFinishedPanel.tsx";
+import { VERSION } from "./version.ts";
 
 const TOTAL_TURNS = 5;
 const GRID_SIZE = 6;
@@ -320,7 +321,7 @@ export function App() {
         totalTurns={TOTAL_TURNS}
         points={points}
         gameSeed={seed}
-        version="0.4.1"
+        version={VERSION}
         timerDisplay={displayTime}
         timerWarning={timeRemaining <= 60}
         statusMessage={statusMessage}
