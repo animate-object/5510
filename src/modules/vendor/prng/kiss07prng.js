@@ -1,10 +1,11 @@
-import Mash from './mash.js';
+import Mash from "./mash.js";
 
 // From http://baagoe.com/en/RandomMusings/javascript/
 export default function KISS07() {
   // George Marsaglia, 2007-06-23
   //http://groups.google.com/group/comp.lang.fortran/msg/6edb8ad6ec5421a5
   var args = Array.prototype.slice.call(arguments);
+  log("rng", `New rng with seed: ${args}`);
   var x = 123456789;
   var y = 362436069;
   var z = 21288629;

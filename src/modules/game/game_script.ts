@@ -90,18 +90,14 @@ function scoreTurn(wordsPlayed: PlayedWord[]): number {
 }
 
 const applyWordsPlayedBonus = (wordsPlayed: number): number => {
-  // const multiplier = Math.max(0.5 * wordsPlayed, 1); // 1 for 1 or 2, 1.5 for 3, 2 for 4, 2.5 for 5, etc.
-  // const multiplier = wordsPlayed; // 1 for 1, 2 for 2, 3 for 3, etc.
-  // how will this influence the game though?
-  // it should be rewording to play many words, but should it be more rewarding than playing a single high-scoring word?
-
   let multiplier: number;
   if (wordsPlayed === 1) {
     multiplier = 1;
   } else if (wordsPlayed === 2) {
     multiplier = 1.5;
   } else {
-    multiplier = Math.min(wordsPlayed, 5) - 1; // 2 for 3, 3 for 4, 4 for 5
+    // 2 for 3, 3 for 4, 4 for 5
+    multiplier = Math.min(wordsPlayed, 5) - 1;
   }
 
   return multiplier;
