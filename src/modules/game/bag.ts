@@ -201,7 +201,8 @@ export function drawHand(
   );
 
   let drawnLetters = [...vowels, ...consonants];
-  drawnLetters.sort();
+
+  // drawnLetters.sort();
 
   const hand = {
     size: total,

@@ -28,7 +28,7 @@ function afterLocalDate(y: number, m: number, d: number): FlagRule {
 
 const Rules: Record<Flags, FlagRule> = {
   [Flags.cheat_draw_vowels]: () => true,
-  [Flags.cheat_draw_consonants]: afterLocalDate(2024, 4, 18),
+  [Flags.cheat_draw_consonants]: () => true,
   [Flags.emoji_share]: () => false,
 };
 
